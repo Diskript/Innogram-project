@@ -1,5 +1,5 @@
 // Export Prisma client for use across the monorepo
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
 
 // Create a singleton instance of PrismaClient
 const globalForPrisma = globalThis as unknown as {
@@ -13,5 +13,7 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-export * from "@prisma/client";
+export * from "../generated/prisma/client.js";
+export * from "../generated/prisma/enums.js";
+export * from "../generated/prisma/models.js";
 export default prisma;
