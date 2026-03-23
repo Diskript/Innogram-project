@@ -2,6 +2,7 @@
   "name": "@repo/shared-types",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -16,6 +17,8 @@
     "class-transformer": "^0.5.1"
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "eslint": "^9.18.0",
     "typescript": "^5.8.0"
   }
 }

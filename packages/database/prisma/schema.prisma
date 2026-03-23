@@ -41,11 +41,6 @@ model User {
   updatedUsers User[]  @relation("UserUpdate")
 
   accounts           Account[]      @relation("UserAccounts")
-  createdAccounts    Account[]      @relation("AccountCreation")
-  updatedAccounts    Account[]      @relation("AccountUpdate")
-  profiles           Profile[]
-  createdProfiles    Profile[]      @relation("ProfileCreation")
-  updatedProfiles    Profile[]      @relation("ProfileUpdate")
   createdPosts       Post[]         @relation("PostCreation")
   updatedPosts       Post[]         @relation("PostUpdate")
   createdComments    Comment[]      @relation("CommentCreation")
@@ -55,6 +50,20 @@ model User {
   postsAssets        Posts_Assets[]
   createdPostsAssets Posts_Assets[] @relation("Posts_AssetsCreation")
   updatedPostsAssets Posts_Assets[] @relation("Posts_AssetsUpdate")
+
+  // Profile fields
+  userName    String   @unique()
+  displayName String   @db.VarChar(50)
+  birthday    DateTime
+  bio         String   @db.VarChar(500)
+  avatarUrl   String   @db.VarChar(500)
+  isPublic    Boolean  @default(true)
+  deleted     Boolean  @default(false)
+
+  // Relations from Profile model
+  comments  Comment[]
+  followers Users_Follows[] @relation("Follower")
+  following Users_Follows[] @relation("Following")
 }
 
 model Account {
@@ -68,39 +77,12 @@ model Account {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  user        User    @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
-  createdById String? @map("created_by")
-  updatedById String? @map("updated_by")
-  createdBy   User?   @relation("AccountCreation", fields: [createdById], references: [id])
-  updatedBy   User?   @relation("AccountUpdate", fields: [updatedById], references: [id])
-}
-
-model Profile {
-  id          String   @id() @default(uuid())
-  userId      String
-  userName    String   @unique()
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  displayName String   @db.VarChar(50)
-  birthday    DateTime
-  bio         String
-  avatarUrl   String   @db.VarChar(500)
-  isPublic    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?  @map("created_by")
-  updatedBy   String?  @map("updated_by")
-  creator     User?    @relation("ProfileCreation", fields: [createdBy], references: [id])
-  updater     User?    @relation("ProfileUpdate", fields: [updatedBy], references: [id])
-  deleted     Boolean  @default(false)
-
-  comments        Comment[]
-  followers       Profiles_Follows[] @relation("Follower")
-  following       Profiles_Follows[] @relation("Following")
+  user User @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Post {
   id        String   @id @default(uuid())
-  profileId String
+  userId    String
   content   String
   archived  Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -111,16 +93,16 @@ model Post {
   updatedBy String? @map("updated_by")
   updater   User?   @relation("PostUpdate", fields: [updatedBy], references: [id])
 
-  comments    Comment[]     @relation("post_id")
-  postsAssets Posts_Assets?
+  comments    Comment[]      @relation("post_id")
+  postsAssets Posts_Assets[]
 }
 
 model Comment {
   id              String    @id @default(uuid())
   postId          String
   post            Post      @relation("post_id", fields: [postId], references: [id], onDelete: Cascade)
-  profileId       String
-  profile         Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   parentCommentId String?
   parentComment   Comment?  @relation("CommentParentChild", fields: [parentCommentId], references: [id], onDelete: Cascade)
   childComments   Comment[] @relation("CommentParentChild")
@@ -134,25 +116,25 @@ model Comment {
 }
 
 model Asset {
-  id          String        @id @default(uuid())
+  id          String         @id @default(uuid())
   fileName    String
   filePath    String
   fileType    String
   fileSize    Int
-  orderIndex  Int           @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  createdBy   String?       @map("created_by")
-  creator     User?         @relation("AssetCreation", fields: [createdBy], references: [id])
-  updatedBy   String?       @map("updated_by")
-  updater     User?         @relation("AssetUpdate", fields: [updatedBy], references: [id])
-  postsAssets Posts_Assets?
+  orderIndex  Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  createdBy   String?        @map("created_by")
+  creator     User?          @relation("AssetCreation", fields: [createdBy], references: [id])
+  updatedBy   String?        @map("updated_by")
+  updater     User?          @relation("AssetUpdate", fields: [updatedBy], references: [id])
+  postsAssets Posts_Assets[]
 }
 
 model Posts_Assets {
   id         String   @id @default(uuid())
-  postId     String   @unique
-  assetId    String   @unique
+  postId     String
+  assetId    String
   post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
   orderIndex Int      @default(0)
@@ -164,14 +146,16 @@ model Posts_Assets {
   updater    User?    @relation("Posts_AssetsUpdate", fields: [updatedBy], references: [id])
   user       User?    @relation(fields: [userId], references: [id])
   userId     String?
+
+  @@unique([postId, assetId])
 }
 
-model Profiles_Follows {
+model Users_Follows {
   id          String   @id @default(uuid())
   followerId  String
   followingId String
-  follower    Profile  @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
-  following   Profile  @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

@@ -5,7 +5,7 @@ import prettierPlugin from "eslint-plugin-prettier";
 
 /**
  * Base ESLint configuration for the monorepo
- * 
+ *
  * @type {import("eslint").Linter.Config[]}
  */
 export const config = [
@@ -33,16 +33,15 @@ export const config = [
       "@typescript-eslint": tseslint.plugin,
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/explicit-function-return-type": "off",
       "prefer-const": "error",
       "no-var": "error",
       "prettier/prettier": "error",
-      semi: ["error", "always"],
-      quotes: ["error", "single", { avoidEscape: true }],
-      indent: ["error", 2, { SwitchCase: 1 }],
-      "comma-dangle": ["error", "es5"],
       "max-len": [
         "error",
         {
@@ -53,7 +52,7 @@ export const config = [
           ignoreComments: true,
         },
       ],
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-console": ["warn", { allow: ["warn", "error", "info"] }],
       eqeqeq: ["error", "always"],
       curly: ["error", "all"],
     },

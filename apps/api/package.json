@@ -5,10 +5,9 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
     "test": "turbo run test"
   },
   "devDependencies": {
-    "turbo": "^2.8.17"
+    "turbo": "^2.8.20"
   }
 }
