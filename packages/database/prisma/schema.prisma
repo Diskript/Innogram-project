@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Providers {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  GITHUB
+  TWITTER
+}
+
+model User {
+  id        String   @id() @default(uuid())
+  role      String   @default("USER")
+  disabled  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy    String? @map("created_by")
+  updatedBy    String? @map("updated_by")
+  creator      User?   @relation("UserCreation", fields: [createdBy], references: [id])
+  updater      User?   @relation("UserUpdate", fields: [updatedBy], references: [id])
+  createdUsers User[]  @relation("UserCreation")
+  updatedUsers User[]  @relation("UserUpdate")
+
+  accounts           Account[]      @relation("UserAccounts")
+  createdPosts       Post[]         @relation("PostCreation")
+  updatedPosts       Post[]         @relation("PostUpdate")
+  createdComments    Comment[]      @relation("CommentCreation")
+  updatedComments    Comment[]      @relation("CommentUpdate")
+  createdAssets      Asset[]        @relation("AssetCreation")
+  updatedAssets      Asset[]        @relation("AssetUpdate")
+  postsAssets        Posts_Assets[]
+  createdPostsAssets Posts_Assets[] @relation("Posts_AssetsCreation")
+  updatedPostsAssets Posts_Assets[] @relation("Posts_AssetsUpdate")
+
+  // Profile fields
+  userName    String   @unique()
+  displayName String   @db.VarChar(50)
+  birthday    DateTime
+  bio         String   @db.VarChar(500)
+  avatarUrl   String   @db.VarChar(500)
+  isPublic    Boolean  @default(true)
+  deleted     Boolean  @default(false)
+
+  // Relations from Profile model
+  comments  Comment[]
+  followers Users_Follows[] @relation("Follower")
+  following Users_Follows[] @relation("Following")
+}
+
+model Account {
+  id            String    @id() @default(uuid())
+  userId        String
+  email         String    @unique()
+  passwordHash  String    @db.VarChar(255)
+  provider      Providers
+  providerId    String
+  last_login_at DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  userId    String
+  content   String
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy String? @map("created_by")
+  creator   User?   @relation("PostCreation", fields: [createdBy], references: [id])
+  updatedBy String? @map("updated_by")
+  updater   User?   @relation("PostUpdate", fields: [updatedBy], references: [id])
+
+  comments    Comment[]      @relation("post_id")
+  postsAssets Posts_Assets[]
+}
+
+model Comment {
+  id              String    @id @default(uuid())
+  postId          String
+  post            Post      @relation("post_id", fields: [postId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentCommentId String?
+  parentComment   Comment?  @relation("CommentParentChild", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  childComments   Comment[] @relation("CommentParentChild")
+  content         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy       String?   @map("created_by")
+  creator         User?     @relation("CommentCreation", fields: [createdBy], references: [id])
+  updatedBy       String?   @map("updated_by")
+  updater         User?     @relation("CommentUpdate", fields: [updatedBy], references: [id])
+}
+
+model Asset {
+  id          String         @id @default(uuid())
+  fileName    String
+  filePath    String
+  fileType    String
+  fileSize    Int
+  orderIndex  Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  createdBy   String?        @map("created_by")
+  creator     User?          @relation("AssetCreation", fields: [createdBy], references: [id])
+  updatedBy   String?        @map("updated_by")
+  updater     User?          @relation("AssetUpdate", fields: [updatedBy], references: [id])
+  postsAssets Posts_Assets[]
+}
+
+model Posts_Assets {
+  id         String   @id @default(uuid())
+  postId     String
+  assetId    String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  orderIndex Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  createdBy  String?  @map("created_by")
+  creator    User?    @relation("Posts_AssetsCreation", fields: [createdBy], references: [id])
+  updatedBy  String?  @map("updated_by")
+  updater    User?    @relation("Posts_AssetsUpdate", fields: [updatedBy], references: [id])
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+
+  @@unique([postId, assetId])
+}
+
+model Users_Follows {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

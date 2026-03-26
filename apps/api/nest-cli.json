@@ -1,0 +1,21 @@
+{
+  "monorepo": true,
+  "root": "apps/core-microservice",
+  "sourceRoot": "apps/core-microservice/src",
+  "compilerOptions": {
+    "webpack": true,
+    "tsConfigPath": "apps/core-microservice/tsconfig.app.json"
+  },
+  "projects": {
+    "core-microservice": {
+      "type": "application",
+      "root": "apps/core-microservice",
+      "entryFile": "main",
+      "sourceRoot": "apps/core-microservice/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/core-microservice/tsconfig.app.json",
+        "eslintConfigPath": "apps/core-microservice/.eslintrc.json"
+      }
+    }
+  }
+}
