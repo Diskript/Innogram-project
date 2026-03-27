@@ -12,13 +12,15 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/swagger": "^11.2.6",
     "@repo/typescript-config": "workspace:*",
-    "class-validator": "^0.14.1",
-    "class-transformer": "^0.5.1"
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
-    "eslint": "^9.18.0",
-    "typescript": "^5.8.0"
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.2"
   }
 }
