@@ -3,20 +3,21 @@ import { Type } from "class-transformer";
 import {
   IsArray,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
 } from "class-validator";
 import { AssetDto } from "./assets.dto";
 
 export class CreatePostDto {
   @ApiProperty({
     description: "The ID of the user creating the post",
-    example: 1,
+    example: "uuid-string",
   })
-  @IsNumber({}, { message: "User ID must be a valid number" })
+  @IsString({ message: "User ID must be a string" })
+  @IsUUID(undefined, { message: "User ID must be a valid UUID" })
   @IsNotEmpty({ message: "User ID is required" })
-  userId!: number;
+  userId!: string;
 
   @ApiProperty({
     description: "The content of the post",

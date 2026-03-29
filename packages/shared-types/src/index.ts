@@ -15,6 +15,7 @@ import "./express.d.ts";
 // Export shared types and DTOs
 export * from "./auth/index";
 export * from "./posts/index";
+export * from "./users/index";
 export * from "./user.interface";
 
 // Roles as const assertion for better type inference and JS output
