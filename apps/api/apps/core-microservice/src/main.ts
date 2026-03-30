@@ -29,7 +29,7 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  // Helmet middleware for protaction
+  // Helmet middleware for protection
   app.use(
     helmet({
       strictTransportSecurity: false, //no TLS security protocol for this pet project

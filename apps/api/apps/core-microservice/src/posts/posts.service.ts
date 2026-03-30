@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { CreatePostDto, UpdatePostDto } from "@repo/shared-types";
+import { CreatePostDto, QueryPostDto, UpdatePostDto } from "@repo/shared-types";
 
 @Injectable()
 export class PostsService {
@@ -50,7 +50,8 @@ export class PostsService {
     return post;
   }
 
-  async findAll(skip: number = 0, take: number = 10, userId?: string) {
+  async findAll(query: QueryPostDto) {
+    const { skip = 0, take = 10, userId } = query;
     const where = userId ? { userId } : {};
 
     const [posts, total] = await Promise.all([

@@ -54,7 +54,7 @@ export class PostsController {
   })
   @ApiResponse({ status: 200, description: "Posts retrieved successfully" })
   async findAll(@Query() query: QueryPostDto) {
-    return this.postsService.findAll(query.skip, query.take, query.userId);
+    return this.postsService.findAll(query);
   }
 
   @Get(":id")
@@ -81,7 +81,7 @@ export class PostsController {
   @Delete(":id")
   @ApiOperation({ summary: "Delete a post (soft delete by archiving)" })
   @ApiParam({ name: "id", type: String, description: "Post UUID" })
-  @ApiResponse({ status: 200, description: "Post archived successfully" })
+  @ApiResponse({ status: 204, description: "Post archived successfully" })
   @ApiResponse({ status: 404, description: "Post not found" })
   async remove(@Param("id", ParseUUIDPipe) id: string) {
     return this.postsService.remove(id);
