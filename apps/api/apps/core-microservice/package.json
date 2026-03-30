@@ -2,11 +2,10 @@
   "name": "@repo/api-core",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
-    "start": "node dist/main",
+    "start": "node dist/apps/api/apps/core-microservice/src/main.js",
     "start:debug": "nest start --debug --watch",
     "lint": "eslint \"{src,apps,libs}/**/*.ts\" --fix --ignore-pattern \"**/*.spec.ts\" --ignore-pattern \"**/*.test.ts\"",
     "test": "jest",

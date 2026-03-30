@@ -16,6 +16,16 @@
         "tsConfigPath": "apps/core-microservice/tsconfig.app.json",
         "eslintConfigPath": "apps/core-microservice/.eslintrc.json"
       }
+    },
+    "auth-microservice": {
+      "type": "application",
+      "root": "apps/auth-microservice",
+      "entryFile": "main",
+      "sourceRoot": "apps/auth-microservice/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/auth-microservice/tsconfig.app.json",
+        "eslintConfigPath": "apps/auth-microservice/eslint.config.js"
+      }
     }
   }
 }

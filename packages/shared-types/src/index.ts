@@ -9,8 +9,7 @@ import {
 } from "@nestjs/common";
 import { NextFunction, Request, Response } from "express";
 
-// Import type declarations (this augments Express Request type)
-import "./express.d.ts";
+// Type declarations in express.d.ts augment Express Request type automatically
 
 // Export shared types and DTOs
 export * from "./auth/index";
