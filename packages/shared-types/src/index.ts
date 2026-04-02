@@ -8,6 +8,7 @@ import {
   NestMiddleware,
 } from "@nestjs/common";
 import { NextFunction, Request, Response } from "express";
+import * as bcrypt from "bcrypt";
 
 // Type declarations in express.d.ts augment Express Request type automatically
 
@@ -33,6 +34,22 @@ export const CurrentUser = createParamDecorator(
     return request.user;
   },
 );
+
+//Hashing func
+export async function hashingFunction(data: string) {
+  const salt = process.env.HASH_SALT;
+  if (!salt) {
+    throw new Error("No crypto ENV detected");
+  }
+  return await bcrypt.hash(data, salt);
+}
+
+export async function comparePassword(
+  password: string,
+  hash: string,
+): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
 
 // Request-Response logging middleware
 @Injectable()

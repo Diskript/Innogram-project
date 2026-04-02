@@ -14,13 +14,15 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
     "@repo/typescript-config": "workspace:*",
+    "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@repo/eslint-config": "workspace:*",
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
     "eslint": "^9.39.1",
     "typescript": "^5.9.2"
   }
