@@ -1,5 +1,6 @@
 import { ConflictException, Injectable } from "@nestjs/common";
 import {
+  comparePassword,
   hashingFunction,
   LoginDto,
   RefreshTokenDto,
@@ -85,10 +86,28 @@ export class JwtAuthService {
     };
   }
 
-  //async authenticateUser(loginDto: LoginDto) {
-  // TODO: Implement user authentication logic
-  //  throw new Error();
-  //}
+  async authenticateUser(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+    const existingAccount = await this.prismaService.client.account.findUnique({
+      where: { email: email },
+    });
+
+    if (!existingAccount) {
+      throw new ConflictException("Accout not found");
+    }
+
+    const isValidPassword = await comparePassword(
+      password,
+      existingAccount.passwordHash,
+    );
+
+    if (isValidPassword) {
+      return {
+        message: "Authenticated seccessfully",
+        userId: existingAccount.userId,
+      };
+    }
+  }
 
   // async processRefreshToken(oldRefreshTokenId: RefreshTokenDto) {
   // TODO: Implement refresh token processing logic
