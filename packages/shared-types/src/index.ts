@@ -64,7 +64,7 @@ export class ReqResLoggerMiddelware implements NestMiddleware {
       const duration = Date.now() - start;
       const { statusCode } = res;
 
-      const user = req.user;
+      const user = req.user as { id: string } | undefined;
       const userInfo = user
         ? ` - User: ${user.id} Authenticated successfully`
         : "";

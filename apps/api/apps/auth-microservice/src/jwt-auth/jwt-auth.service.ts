@@ -3,7 +3,6 @@ import {
   comparePassword,
   hashingFunction,
   LoginDto,
-  RefreshTokenDto,
   SignUpDto,
 } from "@repo/shared-types";
 import { PrismaService } from "../prisma/prisma.service";
@@ -65,7 +64,7 @@ export class JwtAuthService {
         });
 
         // Create the account
-        await prisma.account.create({
+        const accout = await prisma.account.create({
           data: {
             userId: user.id,
             email: _signUpDto.email,
@@ -76,14 +75,29 @@ export class JwtAuthService {
           },
         });
 
-        return user;
+        return { user, accout };
       },
     );
 
     return {
       message: "User registered successfully",
-      userId: result.id,
+      userId: result.user.id,
+      userEmail: result.accout.email,
     };
+  }
+
+  private async validateJWT(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.jwtSecret,
+      });
+      return { valid: true, user: payload };
+    } catch {
+      return {
+        valid: false,
+        error: new ConflictException("Unable to validate user"),
+      };
+    }
   }
 
   async authenticateUser(loginDto: LoginDto) {
@@ -101,10 +115,15 @@ export class JwtAuthService {
       existingAccount.passwordHash,
     );
 
+    const accessToken = await this.jwtService.signAsync({
+      sub: existingAccount.userId,
+      email: existingAccount.email,
+    });
     if (isValidPassword) {
       return {
         message: "Authenticated seccessfully",
         userId: existingAccount.userId,
+        accessToken: accessToken,
       };
     }
   }
