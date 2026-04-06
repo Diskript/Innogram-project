@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller } from "@nestjs/common";
 
-@Controller('jwt-auth')
+@Controller("jwt-auth")
 export class JwtAuthController {}

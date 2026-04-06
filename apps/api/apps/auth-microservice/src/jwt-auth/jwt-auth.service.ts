@@ -1,12 +1,33 @@
-import { ConflictException, Injectable } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import {
   comparePassword,
   hashingFunction,
   LoginDto,
   SignUpDto,
+  RefreshTokenDto,
 } from "@repo/shared-types";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtService } from "@nestjs/jwt";
+import { InjectRedis } from "@nestjs-modules/ioredis";
+import { Redis } from "ioredis";
+import { randomUUID } from "crypto";
+
+export interface AuthTokensResponse {
+  message: string;
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RefreshTokensResponse {
+  message: string;
+  accessToken: string;
+  refreshToken: string;
+}
 
 @Injectable()
 export class JwtAuthService {
@@ -14,20 +35,43 @@ export class JwtAuthService {
   private readonly jwtExpiresIn: string;
   private readonly refreshExpiresIn: string;
   private readonly coreServiceUrl: string;
+  private readonly refreshTokenTTL: number; // in seconds
 
   constructor(
     private prismaService: PrismaService,
     private jwtService: JwtService,
+    @InjectRedis() private redis: Redis,
   ) {
     this.jwtSecret = process.env.JWT_SECRET || "your-super-secret-jwt-key-here";
     this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || "15m";
     this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
     this.coreServiceUrl =
       process.env.CORE_SERVICE_URL || "http://localhost:3001";
+
+    // Parse refresh token expiration to seconds for Redis TTL
+    this.refreshTokenTTL = this.parseExpirationToSeconds(this.refreshExpiresIn);
+  }
+
+  /**
+   * Parse expiration string (e.g., "7d", "15m", "1h") to seconds
+   */
+  private parseExpirationToSeconds(expiration: string): number {
+    const unit = expiration.slice(-1);
+    const value = parseInt(expiration, 10);
+
+    switch (unit) {
+      case "m":
+        return value * 60;
+      case "h":
+        return value * 60 * 60;
+      case "d":
+        return value * 60 * 60 * 24;
+      default:
+        return 7 * 24 * 60 * 60; // default 7 days
+    }
   }
 
   async registerUser(_signUpDto: SignUpDto) {
-    // Check if user with this email already exists
     const existingAccount = await this.prismaService.client.account.findUnique({
       where: { email: _signUpDto.email },
     });
@@ -36,7 +80,6 @@ export class JwtAuthService {
       throw new ConflictException("User with this email already exists");
     }
 
-    // Check if username is already taken
     const existingUser = await this.prismaService.client.user.findUnique({
       where: { userName: _signUpDto.username },
     });
@@ -51,7 +94,6 @@ export class JwtAuthService {
     // Create user and account in a transaction
     const result = await this.prismaService.client.$transaction(
       async (prisma) => {
-        // Create the user
         const user = await prisma.user.create({
           data: {
             userName: _signUpDto.username,
@@ -100,14 +142,36 @@ export class JwtAuthService {
     }
   }
 
-  async authenticateUser(loginDto: LoginDto) {
+  /**
+   * Generate both access and refresh tokens for a user
+   */
+  private async generateTokens(
+    userId: string,
+    email: string,
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const accessToken = await this.jwtService.signAsync(
+      { sub: userId, email },
+      { expiresIn: this.jwtExpiresIn } as any,
+    );
+
+    const refreshToken = randomUUID();
+    const key = `refresh-token:${userId}`;
+    await this.redis.set(key, refreshToken, "EX", this.refreshTokenTTL);
+
+    return { accessToken, refreshToken };
+  }
+
+  async authenticateUser(loginDto: LoginDto): Promise<AuthTokensResponse> {
     const { email, password } = loginDto;
     const existingAccount = await this.prismaService.client.account.findUnique({
       where: { email: email },
     });
 
     if (!existingAccount) {
-      throw new ConflictException("Accout not found");
+      throw new ConflictException("Account not found");
     }
 
     const isValidPassword = await comparePassword(
@@ -115,36 +179,131 @@ export class JwtAuthService {
       existingAccount.passwordHash,
     );
 
-    const accessToken = await this.jwtService.signAsync({
-      sub: existingAccount.userId,
-      email: existingAccount.email,
-    });
-    if (isValidPassword) {
-      return {
-        message: "Authenticated seccessfully",
-        userId: existingAccount.userId,
-        accessToken: accessToken,
-      };
+    if (!isValidPassword) {
+      throw new UnauthorizedException("Invalid credentials");
     }
+
+    const { accessToken, refreshToken } = await this.generateTokens(
+      existingAccount.userId,
+      existingAccount.email,
+    );
+
+    // Update last login
+    await this.prismaService.client.account.update({
+      where: { id: existingAccount.id },
+      data: { last_login_at: new Date() },
+    });
+
+    return {
+      message: "Authenticated successfully",
+      userId: existingAccount.userId,
+      accessToken,
+      refreshToken,
+    };
   }
 
-  // async processRefreshToken(oldRefreshTokenId: RefreshTokenDto) {
-  // TODO: Implement refresh token processing logic
-  // throw new Error();
-  // }
+  /**
+   * Process refresh token and return new token pair
+   * Implements token rotation - old token is invalidated, new one is issued
+   */
+  async processRefreshToken(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<RefreshTokensResponse> {
+    const { refreshToken } = refreshTokenDto;
 
-  // async validateToken(accessToken: string) {
-  // TODO: Implement token validation logic
-  // throw new Error();
-  // }
+    // Find user by refresh token in Redis
+    // We need to scan all refresh tokens to find the matching one
+    const userId = await this.findUserIdByRefreshToken(refreshToken);
 
-  //   async exchangeCodeForTokens(code: string, provider: string) {
-  //     // TODO: Implement OAuth code exchange logic
-  //     throw new Error();
-  //   }
+    if (!userId) {
+      throw new UnauthorizedException("Invalid or expired refresh token");
+    }
 
-  //private generateNewTokens(userId: string, userRole: string) {
-  // TODO: Implement token generation logic
-  //  throw new Error();
-  //}
+    // Verify the token is still valid (not revoked)
+    const storedToken = await this.redis.get(`refresh-token:${userId}`);
+    if (storedToken !== refreshToken) {
+      // Token mismatch - possible token theft, revoke all tokens
+      await this.revokeRefreshToken(userId);
+      throw new UnauthorizedException("Refresh token has been revoked");
+    }
+
+    // Get user account to include email in new tokens
+    const account = await this.prismaService.client.account.findFirst({
+      where: { userId },
+    });
+
+    if (!account) {
+      throw new UnauthorizedException("User account not found");
+    }
+
+    // Generate new token pair (token rotation)
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.generateTokens(userId, account.email);
+
+    return {
+      message: "Tokens refreshed successfully",
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  /**
+   * Find user ID by refresh token (scans Redis keys)
+   */
+  private async findUserIdByRefreshToken(
+    refreshToken: string,
+  ): Promise<string | null> {
+    const pattern = "refresh-token:*";
+    let cursor = "0";
+
+    do {
+      const result = await this.redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100,
+      );
+      cursor = result[0];
+      const keys = result[1];
+
+      for (const key of keys) {
+        const token = await this.redis.get(key);
+        if (token === refreshToken) {
+          // Extract userId from key (format: refresh-token:userId)
+          return key.split(":")[1];
+        }
+      }
+    } while (cursor !== "0");
+
+    return null;
+  }
+
+  /**
+   * Revoke (delete) refresh token for a user
+   */
+  async revokeRefreshToken(userId: string): Promise<void> {
+    await this.redis.del(`refresh-token:${userId}`);
+  }
+
+  /**
+   * Revoke all refresh tokens for a user (logout from all devices)
+   */
+  async revokeAllRefreshTokens(userId: string): Promise<void> {
+    await this.revokeRefreshToken(userId);
+  }
+
+  /**
+   * Validate access token
+   */
+  async validateAccessToken(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.jwtSecret,
+      });
+      return { valid: true, payload };
+    } catch {
+      return { valid: false, error: "Invalid or expired access token" };
+    }
+  }
 }
