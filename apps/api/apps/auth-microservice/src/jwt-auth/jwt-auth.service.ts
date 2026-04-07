@@ -11,7 +11,7 @@ import {
   RefreshTokenDto,
 } from "@repo/shared-types";
 import { PrismaService } from "../prisma/prisma.service";
-import { JwtService } from "@nestjs/jwt";
+import { JwtService, JwtSignOptions } from "@nestjs/jwt";
 import { InjectRedis } from "@nestjs-modules/ioredis";
 import { Redis } from "ioredis";
 import { randomUUID } from "crypto";
@@ -154,7 +154,7 @@ export class JwtAuthService {
   }> {
     const accessToken = await this.jwtService.signAsync(
       { sub: userId, email },
-      { expiresIn: this.jwtExpiresIn } as any,
+      { expiresIn: this.jwtExpiresIn } as JwtSignOptions,
     );
 
     const refreshToken = randomUUID();
