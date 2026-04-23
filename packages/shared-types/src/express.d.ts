@@ -1,8 +1,13 @@
-// Express type extensions for authentication
-import { User } from "./user.interface";
+import "express";
 
-declare module "express" {
-  interface Request {
-    user?: User;
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        email?: string;
+        [key: string]: unknown;
+      };
+    }
   }
 }

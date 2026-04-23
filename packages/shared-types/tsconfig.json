@@ -16,7 +16,8 @@
     "noEmit": false,
     "composite": false,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "types": ["express"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
