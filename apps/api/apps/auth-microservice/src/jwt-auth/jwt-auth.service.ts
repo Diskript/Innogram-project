@@ -9,6 +9,7 @@ import {
   LoginDto,
   SignUpDto,
   RefreshTokenDto,
+  ParseExpirationToSeconds,
 } from "@repo/shared-types";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtService, JwtSignOptions } from "@nestjs/jwt";
@@ -49,26 +50,7 @@ export class JwtAuthService {
       process.env.CORE_SERVICE_URL || "http://localhost:3001";
 
     // Parse refresh token expiration to seconds for Redis TTL
-    this.refreshTokenTTL = this.parseExpirationToSeconds(this.refreshExpiresIn);
-  }
-
-  /**
-   * Parse expiration string (e.g., "7d", "15m", "1h") to seconds
-   */
-  private parseExpirationToSeconds(expiration: string): number {
-    const unit = expiration.slice(-1);
-    const value = parseInt(expiration, 10);
-
-    switch (unit) {
-      case "m":
-        return value * 60;
-      case "h":
-        return value * 60 * 60;
-      case "d":
-        return value * 60 * 60 * 24;
-      default:
-        return 7 * 24 * 60 * 60; // default 7 days
-    }
+    this.refreshTokenTTL = ParseExpirationToSeconds(this.refreshExpiresIn);
   }
 
   async registerUser(_signUpDto: SignUpDto) {

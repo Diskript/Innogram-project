@@ -38,6 +38,22 @@ export const CurrentUser = createParamDecorator(
   },
 );
 
+export function ParseExpirationToSeconds(expiration: string): number {
+  const unit = expiration.slice(-1);
+  const value = parseInt(expiration, 10);
+
+  switch (unit) {
+    case "m":
+      return value * 60;
+    case "h":
+      return value * 60 * 60;
+    case "d":
+      return value * 60 * 60 * 24;
+    default:
+      return 7 * 24 * 60 * 60; // default 7 days
+  }
+}
+
 //Hashing func
 export async function hashingFunction(data: string) {
   const salt = process.env.HASH_SALT;
@@ -46,6 +62,13 @@ export async function hashingFunction(data: string) {
   }
   return await bcrypt.hash(data, salt);
 }
+
+export const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+};
 
 export async function comparePassword(
   password: string,

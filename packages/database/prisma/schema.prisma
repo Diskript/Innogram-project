@@ -64,7 +64,7 @@ model User {
 model Account {
   id            String    @id() @default(uuid())
   userId        String
-  email         String    @unique()
+  email         String
   passwordHash  String    @db.VarChar(255)
   provider      Providers
   providerId    String
@@ -73,6 +73,8 @@ model Account {
   updatedAt     DateTime  @updatedAt
 
   user User @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
 }
 
 model Post {
