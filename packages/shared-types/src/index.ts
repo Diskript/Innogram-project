@@ -10,10 +10,8 @@ import {
 import { NextFunction, Request, Response } from "express";
 import * as bcrypt from "bcrypt";
 
-// Load Express type augmentations
-import "./express.d.ts";
-
-// Type declarations in express.d.ts augment Express Request type automatically
+// Add empty export to make this a module
+export {};
 
 // Export shared types and DTOs
 export * from "./auth/index";
