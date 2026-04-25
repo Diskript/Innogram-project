@@ -43,6 +43,97 @@ services:
     networks:
       - innogram-network
 
+  # Nginx reverse proxy - routes requests to appropriate microservices
+  nginx:
+    image: nginx:alpine
+    container_name: innogram-nginx
+    ports:
+      - "3000:3000"
+      - "3003:3003"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - core-microservice
+      - auth-microservice
+      - web
+    networks:
+      - innogram-network
+    restart: unless-stopped
+
+  # Auth microservice - handles authentication (JWT, Google OAuth)
+  auth-microservice:
+    build:
+      context: .
+      dockerfile: apps/api/apps/auth-microservice/Dockerfile
+    container_name: innogram-auth
+    environment:
+      DATABASE_URL: postgresql://innogram_user:innogram_password@postgres:5432/innogram
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      AUTH_SERVICE_URL: http://auth-microservice:3002
+      CORE_SERVICE_URL: http://core-microservice:3001
+      WEB_SERVICE_URL: http://web:3003
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - innogram-network
+    restart: unless-stopped
+
+  # Core microservice - API Gateway, handles business logic
+  core-microservice:
+    build:
+      context: .
+      dockerfile: apps/api/apps/core-microservice/Dockerfile
+    container_name: innogram-core
+    environment:
+      DATABASE_URL: postgresql://innogram_user:innogram_password@postgres:5432/innogram
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      AUTH_SERVICE_URL: http://auth-microservice:3002
+      CORE_SERVICE_URL: http://core-microservice:3001
+      WEB_SERVICE_URL: http://web:3003
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      auth-microservice:
+        condition: service_started
+    networks:
+      - innogram-network
+    restart: unless-stopped
+
+  # Web - Next.js frontend
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: innogram-web
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-http://localhost:3000}
+    ports:
+      - "3003:3003"
+    depends_on:
+      - core-microservice
+      - auth-microservice
+    networks:
+      - innogram-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
