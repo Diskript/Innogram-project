@@ -1,7 +1,12 @@
 import { Body, Controller, Post, HttpCode, HttpStatus } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { JwtAuthService } from "./jwt-auth.service";
-import { LoginDto, SignUpDto, RefreshTokenDto } from "@repo/shared-types";
+import {
+  LoginDto,
+  SignUpDto,
+  RefreshTokenDto,
+  ValidateTokenDto,
+} from "@repo/shared-types";
 
 @ApiTags("JWT Auth")
 @Controller("jwt-auth")
@@ -52,5 +57,14 @@ export class JwtAuthController {
   async logoutAll(@Body() body: { userId: string }) {
     await this.jwtAuthService.revokeAllRefreshTokens(body.userId);
     return { message: "Logged out from all devices successfully" };
+  }
+
+  @Post("validate")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Validate access token" })
+  @ApiResponse({ status: 200, description: "Token is valid" })
+  @ApiResponse({ status: 401, description: "Invalid or expired token" })
+  async validate(@Body() validateTokenDto: ValidateTokenDto) {
+    return this.jwtAuthService.validateAccessToken(validateTokenDto.token);
   }
 }
