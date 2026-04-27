@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { GoogleController } from './google.controller';
+import { Test, TestingModule } from "@nestjs/testing";
+import { GoogleController } from "./google.controller";
 
-describe('GoogleController', () => {
+describe("GoogleController", () => {
   let controller: GoogleController;
 
   beforeEach(async () => {
@@ -12,7 +12,7 @@ describe('GoogleController', () => {
     controller = module.get<GoogleController>(GoogleController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 });
