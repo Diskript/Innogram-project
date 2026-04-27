@@ -5,7 +5,7 @@
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
-    "start": "node dist/apps/api/apps/core-microservice/src/main.js",
+    "start": "DOTENV_CONFIG_PATH=../../../../.env node -r dotenv/config dist/main",
     "start:debug": "nest start --debug --watch",
     "lint": "eslint \"{src,apps,libs}/**/*.ts\" --fix --ignore-pattern \"**/*.spec.ts\" --ignore-pattern \"**/*.test.ts\"",
     "test": "jest",
@@ -30,6 +30,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "passport": "^0.7.0",

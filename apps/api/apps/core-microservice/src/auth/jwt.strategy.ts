@@ -18,8 +18,7 @@ export interface JwtUser {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
-    const jwtSecret =
-      process.env.JWT_SECRET || "your-super-secret-jwt-key-here";
+    const jwtSecret = process.env.JWT_SECRET!;
 
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([

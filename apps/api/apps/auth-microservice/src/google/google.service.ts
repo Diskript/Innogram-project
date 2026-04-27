@@ -29,7 +29,7 @@ export class GoogleOAuthService {
     this.jwtSecret = process.env.JWT_SECRET!;
     this.jwtExpiresIn = process.env.JWT_EXPIRES_IN!;
     this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN!;
-    this.clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    this.clientUrl = process.env.CLIENT_URL!;
     this.refreshTokenTTL = ParseExpirationToSeconds(this.refreshExpiresIn);
   }
 
@@ -121,7 +121,9 @@ export class GoogleOAuthService {
   }> {
     const accessToken = await this.jwtService.signAsync(
       { sub: userId, email },
-      { expiresIn: this.jwtExpiresIn } as JwtSignOptions,
+      {
+        expiresIn: ParseExpirationToSeconds(this.jwtExpiresIn),
+      } as JwtSignOptions,
     );
 
     const refreshToken = randomUUID();

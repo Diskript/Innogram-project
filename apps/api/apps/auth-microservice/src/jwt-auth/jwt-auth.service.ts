@@ -33,7 +33,7 @@ export interface RefreshTokensResponse {
 @Injectable()
 export class JwtAuthService {
   private readonly jwtSecret: string;
-  private readonly jwtExpiresIn: string;
+  private readonly jwtExpiresIn: number;
   private readonly refreshExpiresIn: string;
   private readonly coreServiceUrl: string;
   private readonly refreshTokenTTL: number; // in seconds
@@ -43,11 +43,10 @@ export class JwtAuthService {
     private jwtService: JwtService,
     @InjectRedis() private redis: Redis,
   ) {
-    this.jwtSecret = process.env.JWT_SECRET || "your-super-secret-jwt-key-here";
-    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || "15m";
-    this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
-    this.coreServiceUrl =
-      process.env.CORE_SERVICE_URL || "http://localhost:3001";
+    this.jwtSecret = process.env.JWT_SECRET!;
+    this.jwtExpiresIn = ParseExpirationToSeconds(process.env.JWT_EXPIRES_IN!);
+    this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN!;
+    this.coreServiceUrl = process.env.CORE_SERVICE_URL!;
 
     // Parse refresh token expiration to seconds for Redis TTL
     this.refreshTokenTTL = ParseExpirationToSeconds(this.refreshExpiresIn);
@@ -193,8 +192,6 @@ export class JwtAuthService {
   ): Promise<RefreshTokensResponse> {
     const { refreshToken } = refreshTokenDto;
 
-    // Find user by refresh token in Redis
-    // We need to scan all refresh tokens to find the matching one
     const userId = await this.findUserIdByRefreshToken(refreshToken);
 
     if (!userId) {
