@@ -10,6 +10,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U innogram_user -d innogram"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     networks:
       - innogram-network
 
@@ -23,10 +29,10 @@ services:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
-      start_period: 10s
+      start_period: 5s
     restart: unless-stopped
     networks:
       - innogram-network
@@ -49,13 +55,13 @@ services:
     container_name: innogram-nginx
     ports:
       - "3000:3000"
-      - "3003:3003"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - core-microservice
-      - auth-microservice
-      - web
+      core-microservice:
+        condition: service_started
+      auth-microservice:
+        condition: service_started
     networks:
       - innogram-network
     restart: unless-stopped
@@ -80,10 +86,8 @@ services:
     ports:
       - "3002:3002"
     depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
+      migration:
+        condition: service_completed_successfully
     networks:
       - innogram-network
     restart: unless-stopped
@@ -106,34 +110,55 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
-      auth-microservice:
-        condition: service_started
+      migration:
+        condition: service_completed_successfully
     networks:
       - innogram-network
     restart: unless-stopped
 
-  # Web - Next.js frontend
-  web:
+  # Migration service - runs database migrations
+  migration:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
-    container_name: innogram-web
+      dockerfile: apps/api/apps/auth-microservice/Dockerfile
+    container_name: innogram-migration
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
-      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-http://localhost:3000}
-    ports:
-      - "3003:3003"
+      DATABASE_URL: postgresql://innogram_user:innogram_password@postgres:5432/innogram
+    command:
+      [
+        "npx",
+        "prisma",
+        "db",
+        "push",
+        "--schema=./packages/database/prisma/schema.prisma",
+        "--accept-data-loss",
+      ]
     depends_on:
-      - core-microservice
-      - auth-microservice
+      postgres:
+        condition: service_healthy
     networks:
       - innogram-network
-    restart: unless-stopped
+    restart: "no"
 
+  # Web - Next.js frontend
+  # Not implemented yet, will uncomment it later
+#  web:
+#   build:
+#      context: .
+#      dockerfile: apps/web/Dockerfile
+#    container_name: innogram-web
+#    environment:
+#      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+#      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-http://localhost:3000}
+#    ports:
+#      - "3003:3003"
+#    depends_on:
+#      - core-microservice
+#      - auth-microservice
+#    networks:
+#      - innogram-network
+#    restart: unless-stopped
+#
 volumes:
   postgres_data:
   redis_data:

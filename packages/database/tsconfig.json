@@ -13,5 +13,5 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*", "prisma.config.ts", "generated/**/*"]
+  "include": ["src/**/*", "prisma/prisma.config.ts", "generated/**/*"]
 }

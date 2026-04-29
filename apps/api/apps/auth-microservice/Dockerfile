@@ -39,15 +39,21 @@ COPY apps/api/apps/auth-microservice/package.json ./apps/api/apps/auth-microserv
 COPY packages/database/package.json ./packages/database/
 COPY packages/shared-types/package.json ./packages/shared-types/
 
-# Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+# Install dependencies (including dev for type generation)
+RUN pnpm install --frozen-lockfile
 
 # Copy built application
 COPY --from=builder /app/apps/api/apps/auth-microservice/dist ./apps/api/apps/auth-microservice/dist
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
+COPY --from=builder /app/packages/database/dist ./packages/database/dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/apps/auth-microservice/node_modules ./apps/api/apps/auth-microservice/node_modules
+COPY --from=builder /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=builder /app/packages/shared-types/node_modules ./packages/shared-types/node_modules
 
 # Generate Prisma Client
+ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 RUN npx prisma generate --schema=./packages/database/prisma/schema.prisma
 
 # Set environment
@@ -58,4 +64,4 @@ ENV PORT=3002
 EXPOSE 3002
 
 # Start the application
-CMD ["node", "apps/api/apps/auth-microservice/dist/apps/auth-microservice/src/main.js"]
+CMD ["node", "apps/api/apps/auth-microservice/dist/main.js"]
