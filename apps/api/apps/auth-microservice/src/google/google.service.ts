@@ -53,8 +53,8 @@ export class GoogleOAuthService {
       });
     } else {
       const accountWithEmail =
-        await this.prismaService.client.account.findUnique({
-          where: { email: googleUser.email },
+        await this.prismaService.client.account.findFirst({
+          where: { email: googleUser.email, provider: "LOCAL" },
         });
 
       if (accountWithEmail) {

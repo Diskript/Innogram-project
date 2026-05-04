@@ -20,6 +20,10 @@
     "noEmit": false,
     "composite": false
   },
+  "paths": {
+    "@repo/shared-types": ["../../../../packages/shared-types/dist"],
+    "@repo/database": ["../../../../packages/database/dist/src"]
+  },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
   "exclude": ["node_modules", "dist", "test"]
 }

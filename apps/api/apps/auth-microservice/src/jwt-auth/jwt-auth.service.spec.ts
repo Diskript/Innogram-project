@@ -102,7 +102,7 @@ describe("JwtAuthService", () => {
     };
 
     it("should register a new user successfully", async () => {
-      mockPrismaClient.account.findUnique.mockResolvedValue(null);
+      mockPrismaClient.account.findFirst.mockResolvedValue(null);
       mockPrismaClient.user.findUnique.mockResolvedValue(null);
       mockPrismaClient.user.create.mockResolvedValue({
         id: "user-id",
@@ -121,8 +121,8 @@ describe("JwtAuthService", () => {
         userId: "user-id",
         userEmail: signUpDto.email,
       });
-      expect(mockPrismaClient.account.findUnique).toHaveBeenCalledWith({
-        where: { email: signUpDto.email },
+      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
+        where: { email: signUpDto.email, provider: "LOCAL" },
       });
       expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
         where: { userName: signUpDto.username },
@@ -130,7 +130,7 @@ describe("JwtAuthService", () => {
     });
 
     it("should throw ConflictException if email already exists", async () => {
-      mockPrismaClient.account.findUnique.mockResolvedValue({
+      mockPrismaClient.account.findFirst.mockResolvedValue({
         id: "acc-id",
         email: signUpDto.email,
       });
@@ -166,7 +166,7 @@ describe("JwtAuthService", () => {
     };
 
     it("should authenticate user and return tokens", async () => {
-      mockPrismaClient.account.findUnique.mockResolvedValue({
+      mockPrismaClient.account.findFirst.mockResolvedValue({
         id: "account-id",
         email: loginDto.email,
         userId: "user-id",
@@ -183,13 +183,13 @@ describe("JwtAuthService", () => {
       expect(result).toHaveProperty("userId", "user-id");
       expect(result).toHaveProperty("accessToken", "new-access-token");
       expect(result).toHaveProperty("refreshToken");
-      expect(mockPrismaClient.account.findUnique).toHaveBeenCalledWith({
-        where: { email: loginDto.email },
+      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
+        where: { email: loginDto.email, provider: "LOCAL" },
       });
     });
 
     it("should throw ConflictException if account not found", async () => {
-      mockPrismaClient.account.findUnique.mockResolvedValue(null);
+      mockPrismaClient.account.findFirst.mockResolvedValue(null);
 
       await expect(service.authenticateUser(loginDto)).rejects.toThrow(
         ConflictException,
@@ -200,7 +200,7 @@ describe("JwtAuthService", () => {
     });
 
     it("should throw UnauthorizedException if password is invalid", async () => {
-      mockPrismaClient.account.findUnique.mockResolvedValue({
+      mockPrismaClient.account.findFirst.mockResolvedValue({
         id: "account-id",
         email: loginDto.email,
         userId: "user-id",

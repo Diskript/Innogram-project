@@ -53,8 +53,8 @@ export class JwtAuthService {
   }
 
   async registerUser(_signUpDto: SignUpDto) {
-    const existingAccount = await this.prismaService.client.account.findUnique({
-      where: { email: _signUpDto.email },
+    const existingAccount = await this.prismaService.client.account.findFirst({
+      where: { email: _signUpDto.email, provider: "LOCAL" },
     });
 
     if (existingAccount) {
@@ -147,8 +147,8 @@ export class JwtAuthService {
 
   async authenticateUser(loginDto: LoginDto): Promise<AuthTokensResponse> {
     const { email, password } = loginDto;
-    const existingAccount = await this.prismaService.client.account.findUnique({
-      where: { email: email },
+    const existingAccount = await this.prismaService.client.account.findFirst({
+      where: { email: email, provider: "LOCAL" },
     });
 
     if (!existingAccount) {
