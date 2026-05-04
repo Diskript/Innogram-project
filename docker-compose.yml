@@ -123,7 +123,7 @@ services:
       dockerfile: apps/api/apps/auth-microservice/Dockerfile
     container_name: innogram-migration
     environment:
-      DATABASE_URL: postgresql://innogram_user:innogram_password@postgres:5432/innogram
+      - DATABASE_URL=postgresql://innogram_user:innogram_password@postgres:5432/innogram
     command:
       [
         "npx",
@@ -131,6 +131,8 @@ services:
         "db",
         "push",
         "--schema=./packages/database/prisma/schema.prisma",
+        "--url",
+        "postgresql://innogram_user:innogram_password@postgres:5432/innogram",
         "--accept-data-loss",
       ]
     depends_on:
