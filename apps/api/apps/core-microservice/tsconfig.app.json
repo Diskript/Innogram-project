@@ -2,6 +2,7 @@
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "module": "commonjs",
+    "baseUrl": ".",
     "moduleResolution": "node",
     "declaration": false,
     "outDir": "../../dist/apps/core-microservice",
