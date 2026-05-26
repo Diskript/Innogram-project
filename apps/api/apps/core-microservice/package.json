@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "prebuild": "pnpm --filter @repo/shared-types build && pnpm --filter @repo/database build",
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "DOTENV_CONFIG_PATH=../../../../.env node -r dotenv/config dist/main",
