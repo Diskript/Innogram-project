@@ -155,12 +155,8 @@ export class PostsService {
     }
 
     // Soft delete by archiving
-    return this.prismaService.client.post.update({
+    return this.prismaService.client.post.delete({
       where: { id },
-      data: {
-        archived: true,
-        updatedAt: new Date(),
-      },
     });
   }
 }
