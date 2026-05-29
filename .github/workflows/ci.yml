@@ -50,6 +50,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Clean build caches
+        run: rm -f packages/shared-types/tsconfig.tsbuildinfo packages/database/tsconfig.tsbuildinfo
+
       - name: Build shared-types
         run: pnpm --filter @repo/shared-types build
 
@@ -77,6 +80,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Clean build caches
+        run: rm -f packages/shared-types/tsconfig.tsbuildinfo packages/database/tsconfig.tsbuildinfo
 
       - name: Build shared-types
         run: pnpm --filter @repo/shared-types build

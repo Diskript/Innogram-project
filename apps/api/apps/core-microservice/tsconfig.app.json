@@ -2,9 +2,9 @@
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "baseUrl": ".",
     "moduleResolution": "node",
     "declaration": false,
+    "baseUrl": ".",
     "outDir": "../../dist/apps/core-microservice",
     "target": "ES2021",
     "strict": true,
@@ -14,8 +14,8 @@
     "noEmit": false,
     "composite": false,
     "paths": {
-      "@repo/database": ["../../../../packages/database/dist"],
-      "@repo/shared-types": ["../../../../packages/shared-types/dist"]
+      "@repo/shared-types": ["../../../../packages/shared-types/dist"],
+      "@repo/database": ["../../../../packages/database/dist/src"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],

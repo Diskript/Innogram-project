@@ -4,7 +4,6 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "declaration": false,
-    "baseUrl": ".",
     "outDir": "../../dist/apps/auth-microservice",
     "target": "ES2021",
     "strict": true,
@@ -12,11 +11,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "noEmit": false,
-    "composite": false,
-    "paths": {
-      "@repo/database": ["../../../../packages/database/dist"],
-      "@repo/shared-types": ["../../../../packages/shared-types/dist"]
-    }
+    "composite": false
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
