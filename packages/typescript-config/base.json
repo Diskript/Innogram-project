@@ -8,9 +8,8 @@
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -20,13 +19,12 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@repo/*": ["../../packages/*/src"],
-      "@repo/database": ["../../packages/database/src"],
-      "@repo/types": ["../../packages/types/src"],
-      "@repo/ui": ["../../packages/ui/src"]
+      "@repo/shared-types": ["../../packages/shared-types/dist"],
+      "@repo/database": ["../../packages/database/dist/src"],
+      "@repo/types": ["../../packages/types/dist/src"],
+      "@repo/ui": ["../../packages/ui/dist/src"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
