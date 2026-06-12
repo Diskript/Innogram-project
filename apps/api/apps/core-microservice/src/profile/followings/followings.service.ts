@@ -30,4 +30,29 @@ export class FollowingsService {
     });
     return followers.length ? followers.map((follow) => follow.follower) : null;
   }
+
+  async followUnfollow(user: JwtUser, id: string) {
+    const existingFollow =
+      await this.prismaService.client.users_Follows.findFirst({
+        where: {
+          followerId: user.userId,
+          followingId: id,
+        },
+      });
+
+    if (existingFollow) {
+      await this.prismaService.client.users_Follows.delete({
+        where: {
+          id: existingFollow.id,
+        },
+      });
+    } else {
+      await this.prismaService.client.users_Follows.create({
+        data: {
+          followerId: user.userId,
+          followingId: id,
+        },
+      });
+    }
+  }
 }
