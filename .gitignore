@@ -43,4 +43,4 @@ yarn-error.log*
 .vscode
 
 plans
-tsconfig.tsbuildinfo
+**/*/tsconfig.tsbuildinfo
