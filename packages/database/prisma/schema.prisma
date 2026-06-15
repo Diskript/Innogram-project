@@ -21,6 +21,17 @@ enum Providers {
   TWITTER
 }
 
+enum Visibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+enum ParticipantRole {
+  ADMIN
+  MEMBER
+}
+
 model User {
   id        String   @id() @default(uuid())
   role      String   @default("USER")
@@ -56,9 +67,22 @@ model User {
   deleted     Boolean  @default(false)
 
   // Relations from Profile model
-  comments  Comment[]
-  followers Users_Follows[] @relation("Follower")
-  following Users_Follows[] @relation("Following")
+  comments    Comment[]
+  followers   Users_Follows[] @relation("Follower")
+  following   Users_Follows[] @relation("Following")
+  ownedAssets Asset[]         @relation("AssetOwner")
+
+  // Conversation relations
+  conversationParticipants Conversation_Participant[]
+  sentMessages             Message[]                  @relation("MessageSender")
+
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@index([role, disabled])
+  @@index([isPublic, deleted])
+  @@index([deleted])
+  @@index([createdAt])
+  @@map("users")
 }
 
 model Account {
@@ -75,6 +99,10 @@ model Account {
   user User @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, provider])
+  @@index([email])
+  @@index([provider, providerId])
+  @@index([userId])
+  @@map("accounts")
 }
 
 model Post {
@@ -92,6 +120,14 @@ model Post {
 
   comments    Comment[]      @relation("post_id")
   postsAssets Posts_Assets[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([userId, archived, createdAt])
+  @@index([userId, createdAt])
+  @@index([archived, createdAt])
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@map("posts")
 }
 
 model Comment {
@@ -110,22 +146,56 @@ model Comment {
   creator         User?     @relation("CommentCreation", fields: [createdBy], references: [id])
   updatedBy       String?   @map("updated_by")
   updater         User?     @relation("CommentUpdate", fields: [updatedBy], references: [id])
+
+  @@index([postId, createdAt])
+  @@index([userId, createdAt])
+  @@index([parentCommentId])
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@map("comments")
 }
 
 model Asset {
-  id          String         @id @default(uuid())
-  fileName    String
-  filePath    String
-  fileType    String
-  fileSize    Int
-  orderIndex  Int            @default(0)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  createdBy   String?        @map("created_by")
-  creator     User?          @relation("AssetCreation", fields: [createdBy], references: [id])
-  updatedBy   String?        @map("updated_by")
-  updater     User?          @relation("AssetUpdate", fields: [updatedBy], references: [id])
-  postsAssets Posts_Assets[]
+  id            String  @id @default(uuid())
+  fileName      String  @db.VarChar(255)
+  originalName  String  @db.VarChar(255)
+  filePath      String  @db.VarChar(500)
+  thumbnailPath String? @db.VarChar(500)
+  mediumPath    String? @db.VarChar(500)
+  fileType      String  @db.VarChar(50)
+  fileSize      Int
+  orderIndex    Int     @default(0)
+
+  width    Int?
+  height   Int?
+  duration Float?
+
+  title       String?
+  description String?
+  tags        String[]
+
+  visibility Visibility @default(PRIVATE)
+  ownerId    String
+  owner      User       @relation("AssetOwner", fields: [ownerId], references: [id])
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  createdBy     String?          @map("created_by")
+  creator       User?            @relation("AssetCreation", fields: [createdBy], references: [id])
+  updatedBy     String?          @map("updated_by")
+  updater       User?            @relation("AssetUpdate", fields: [updatedBy], references: [id])
+  postsAssets   Posts_Assets[]
+  messageAssets Message_Assets[]
+
+  @@index([ownerId, createdAt])
+  @@index([visibility, createdAt])
+  @@index([fileType])
+  @@index([ownerId, visibility])
+  @@index([createdAt])
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@index([ownerId, fileType])
+  @@map("assets")
 }
 
 model Posts_Assets {
@@ -145,6 +215,74 @@ model Posts_Assets {
   userId     String?
 
   @@unique([postId, assetId])
+  @@index([assetId])
+  @@index([userId])
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@map("posts_assets")
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  name      String?
+  isGroup   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants Conversation_Participant[]
+  messages     Message[]
+
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@map("conversations")
+}
+
+model Conversation_Participant {
+  id             String          @id @default(uuid())
+  conversationId String
+  userId         String
+  role           ParticipantRole @default(MEMBER)
+  joinedAt       DateTime        @default(now())
+  leftAt         DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([conversationId])
+  @@index([userId])
+  @@index([userId, leftAt])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  conversation Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User             @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  assets       Message_Assets[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Message_Assets {
+  id        String   @id @default(uuid())
+  messageId String
+  assetId   String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@index([assetId])
+  @@map("message_assets")
 }
 
 model Users_Follows {
@@ -155,4 +293,11 @@ model Users_Follows {
   following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([followerId, followingId])
+  @@index([followerId, createdAt])
+  @@index([followingId, createdAt])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("users_follows")
 }
