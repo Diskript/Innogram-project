@@ -5,9 +5,10 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { ProfileModule } from "./profile/profile.module";
 import { PostsModule } from "./posts/posts.module";
+import { AssetsModule } from './assets/assets.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, ProfileModule, PostsModule],
+  imports: [UsersModule, AuthModule, ProfileModule, PostsModule, AssetsModule],
   controllers: [CoreMicroserviceController],
   providers: [CoreMicroserviceService],
 })
