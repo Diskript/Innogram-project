@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import path, { join } from "path";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Multer } from "multer";
 import { JwtUser, Visibility } from "@repo/shared-types";
 import { ALLOWED_TYPES, isImage, isVideo } from "./utils/mime-types";
@@ -63,7 +64,7 @@ export class FileService {
   async deleteFile(filePath: string): Promise<void> {
     const absolutePath = join(this.uploadDir, filePath);
     try {
-      await fs.unlink(absolutePath);
+      await fs.rm(absolutePath, { force: true });
     } catch (error) {
       throw new NotFoundException(error);
     }
@@ -71,9 +72,5 @@ export class FileService {
 
   async deleteFiles(filePaths: string[]): Promise<void> {
     await Promise.all(filePaths.map((path) => this.deleteFile(path)));
-  }
-
-  private getFullPath(relativePath: string): string {
-    return join(this.uploadDir, relativePath);
   }
 }
