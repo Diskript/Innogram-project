@@ -118,6 +118,7 @@ model Post {
   updatedBy String? @map("updated_by")
   updater   User?   @relation("PostUpdate", fields: [updatedBy], references: [id])
 
+  tags        String[]
   comments    Comment[]      @relation("post_id")
   postsAssets Posts_Assets[]
 
@@ -127,6 +128,7 @@ model Post {
   @@index([archived, createdAt])
   @@index([createdBy])
   @@index([updatedBy])
+  @@index([tags], type: Gin)
   @@map("posts")
 }
 
