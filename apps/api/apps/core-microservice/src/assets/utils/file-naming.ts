@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { Visibility } from "@repo/shared-types";
+import { JwtUser, Visibility } from "@repo/shared-types";
 
 export function generateFileName(originalName: string): string {
   const uuid = crypto.randomUUID();
@@ -19,7 +19,7 @@ export function generateMediumName(fileName: string): string {
 
 export function getStoragePath(
   visibility: Visibility,
-  ownerId: string,
+  user: JwtUser,
   fileName: string,
   conversationId?: string,
 ): string {
@@ -28,9 +28,9 @@ export function getStoragePath(
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
 
-  if (visibility === Visibility.PRIVATE && conversationId) {
-    return `private/${conversationId}/${year}/${month}/${day}/original/${fileName}`;
+  if (conversationId) {
+    return `${visibility.toLowerCase()}/conversations/${conversationId}/${year}/${month}/${day}/original/${fileName}`;
   }
 
-  return `${visibility.toLowerCase()}/${ownerId}/${year}/${month}/${day}/original/${fileName}`;
+  return `${visibility.toLowerCase()}/users/${user.userId}/${year}/${month}/${day}/original/${fileName}`;
 }

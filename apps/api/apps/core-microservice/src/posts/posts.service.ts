@@ -7,7 +7,7 @@ export class PostsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createPostDto: CreatePostDto) {
-    const { userId, content, assets } = createPostDto;
+    const { userId, content, assetIds } = createPostDto;
 
     const post = await this.prismaService.client.post.create({
       data: {
@@ -15,22 +15,12 @@ export class PostsService {
         content,
         createdBy: userId,
         updatedBy: userId,
-        ...(assets &&
-          assets.length > 0 && {
+        ...(assetIds &&
+          assetIds.length > 0 && {
             postsAssets: {
-              create: assets.map((asset, index) => ({
-                orderIndex: asset.orderIndex ?? index,
-                createdBy: userId,
-                asset: {
-                  create: {
-                    fileName: asset.fileName,
-                    filePath: asset.filePath,
-                    fileType: asset.fileType,
-                    fileSize: asset.fileSize,
-                    orderIndex: asset.orderIndex ?? index,
-                    createdBy: userId,
-                  },
-                },
+              create: assetIds.map((assetId, index) => ({
+                assetId,
+                orderIndex: index,
               })),
             },
           }),

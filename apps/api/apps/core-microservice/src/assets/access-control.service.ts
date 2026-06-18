@@ -24,6 +24,21 @@ export class AccessControlService {
               },
             },
           },
+          {
+            messageAssets: {
+              some: {
+                message: {
+                  conversation: {
+                    participants: {
+                      some: {
+                        userId: userId,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         ],
       },
       select: { id: true },
@@ -54,6 +69,21 @@ export class AccessControlService {
               },
             },
           },
+          {
+            messageAssets: {
+              some: {
+                message: {
+                  conversation: {
+                    participants: {
+                      some: {
+                        userId: userId,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         ],
       },
       select: { id: true },
@@ -67,6 +97,27 @@ export class AccessControlService {
 
     if (!canAccess) {
       throw new ForbiddenException("Forbidden");
+    }
+  }
+
+  async assertConversationAccess(
+    userId: string,
+    conversationId: string,
+  ): Promise<void> {
+    const participant =
+      await this.prismaService.client.conversation_Participant.findUnique({
+        where: {
+          conversationId_userId: {
+            conversationId,
+            userId,
+          },
+        },
+      });
+
+    if (!participant || participant.leftAt !== null) {
+      throw new ForbiddenException(
+        "You do not have access to this conversation",
+      );
     }
   }
 }

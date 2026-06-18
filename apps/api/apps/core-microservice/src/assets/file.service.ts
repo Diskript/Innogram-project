@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import path, { join } from "path";
@@ -44,21 +45,33 @@ export class FileService {
     file: Express.Multer.File,
     user: JwtUser,
     visibility: Visibility,
+    conversationId?: string,
   ): Promise<{ fileType: string; filePath: string; fileName: string }> {
     this.validateFile(file);
 
-    const fileName = generateFileName(file.originalname);
-    const relativePath = getStoragePath(visibility, user.userId, fileName);
-    const absolutePath = join(this.uploadDir, relativePath);
+    try {
+      const fileName = generateFileName(file.originalname);
+      const relativePath = getStoragePath(
+        visibility,
+        user,
+        fileName,
+        conversationId,
+      );
+      const absolutePath = join(this.uploadDir, relativePath);
 
-    await fs.mkdir(join(absolutePath, ".."), { recursive: true });
-    await fs.writeFile(absolutePath, file.buffer);
+      await fs.mkdir(join(absolutePath, ".."), { recursive: true });
+      await fs.writeFile(absolutePath, file.buffer);
 
-    return {
-      fileType: file.mimetype,
-      filePath: relativePath,
-      fileName,
-    };
+      return {
+        fileType: file.mimetype,
+        filePath: relativePath,
+        fileName,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Error while saving file: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
   }
 
   async deleteFile(filePath: string): Promise<void> {

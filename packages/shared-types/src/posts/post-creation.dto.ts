@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
 import {
   IsArray,
   IsNotEmpty,
@@ -7,7 +6,6 @@ import {
   IsString,
   IsUUID,
 } from "class-validator";
-import { AssetDto } from "./assets.dto";
 
 export class CreatePostDto {
   @ApiProperty({
@@ -29,11 +27,15 @@ export class CreatePostDto {
   content!: string;
 
   @ApiPropertyOptional({
-    description: "Array of media assets (images/videos) attached to the post",
-    type: [AssetDto],
+    description: "UUIDs of pre-uploaded assets to attach to the post",
+    type: [String],
+    example: ["uuid-1", "uuid-2"],
   })
   @IsOptional()
-  @IsArray({ message: "Assets must be an array" })
-  @Type(() => AssetDto)
-  assets?: AssetDto[];
+  @IsArray({ message: "Asset IDs must be an array" })
+  @IsUUID(undefined, {
+    each: true,
+    message: "Each asset ID must be a valid UUID",
+  })
+  assetIds?: string[];
 }
