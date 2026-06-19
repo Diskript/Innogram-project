@@ -1,18 +1,26 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { CreatePostDto, QueryPostDto, UpdatePostDto } from "@repo/shared-types";
+import {
+  CreatePostDto,
+  JwtUser,
+  QueryPostDto,
+  UpdatePostDto,
+  Visibility,
+} from "@repo/shared-types";
+import { Prisma } from "@repo/database";
 
 @Injectable()
 export class PostsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createPostDto: CreatePostDto) {
-    const { userId, content, assetIds } = createPostDto;
+    const { userId, content, assetIds, visibility } = createPostDto;
 
     const post = await this.prismaService.client.post.create({
       data: {
         userId,
         content,
+        visibility: visibility ?? Visibility.PUBLIC,
         createdBy: userId,
         updatedBy: userId,
         ...(assetIds &&
@@ -40,9 +48,42 @@ export class PostsService {
     return post;
   }
 
-  async findAll(query: QueryPostDto) {
+  async findAll(query: QueryPostDto, currentUser?: JwtUser) {
     const { skip = 0, take = 10, userId } = query;
-    const where = userId ? { userId } : {};
+    const where: Prisma.PostWhereInput = {};
+
+    if (userId) {
+      where.userId = userId;
+
+      if (currentUser && currentUser.userId !== userId) {
+        const follow = await this.prismaService.client.users_Follows.findUnique(
+          {
+            where: {
+              followerId_followingId: {
+                followerId: currentUser.userId,
+                followingId: userId,
+              },
+            },
+            select: { status: true },
+          },
+        );
+
+        if (follow?.status === "ACCEPTED") {
+          where.visibility = { in: [Visibility.PUBLIC, Visibility.FOLLOWERS] };
+        } else {
+          const author = await this.prismaService.client.user.findUnique({
+            where: { id: userId },
+            select: { isPublic: true },
+          });
+
+          if (author?.isPublic) {
+            where.visibility = Visibility.PUBLIC;
+          } else {
+            where.id = "none";
+          }
+        }
+      }
+    }
 
     const [posts, total] = await Promise.all([
       this.prismaService.client.post.findMany({
@@ -144,7 +185,6 @@ export class PostsService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
-    // Soft delete by archiving
     return this.prismaService.client.post.delete({
       where: { id },
     });

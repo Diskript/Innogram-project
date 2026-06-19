@@ -32,6 +32,12 @@ enum ParticipantRole {
   MEMBER
 }
 
+enum FollowStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id        String   @id() @default(uuid())
   role      String   @default("USER")
@@ -106,12 +112,13 @@ model Account {
 }
 
 model Post {
-  id        String   @id @default(uuid())
-  userId    String
-  content   String
-  archived  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String     @id @default(uuid())
+  userId     String
+  content    String
+  visibility Visibility @default(PUBLIC)
+  archived   Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   createdBy String? @map("created_by")
   creator   User?   @relation("PostCreation", fields: [createdBy], references: [id])
@@ -123,9 +130,9 @@ model Post {
   postsAssets Posts_Assets[]
 
   @@index([createdAt(sort: Desc)])
-  @@index([userId, archived, createdAt])
+  @@index([userId, archived, visibility, createdAt])
   @@index([userId, createdAt])
-  @@index([archived, createdAt])
+  @@index([archived, visibility, createdAt])
   @@index([createdBy])
   @@index([updatedBy])
   @@index([tags], type: Gin)
@@ -288,16 +295,19 @@ model Message_Assets {
 }
 
 model Users_Follows {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   followerId  String
   followingId String
-  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      FollowStatus @default(ACCEPTED)
+  follower    User         @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User         @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@unique([followerId, followingId])
+  @@index([followerId, status])
   @@index([followerId, createdAt])
+  @@index([followingId, status])
   @@index([followingId, createdAt])
   @@index([followerId])
   @@index([followingId])

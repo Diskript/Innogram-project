@@ -7,5 +7,6 @@ import { PrismaModule } from "../../prisma/prisma.module";
   imports: [PrismaModule],
   providers: [FollowingsService],
   controllers: [FollowingsController],
+  exports: [FollowingsService],
 })
 export class FollowingsModule {}

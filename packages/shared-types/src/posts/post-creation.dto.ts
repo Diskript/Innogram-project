@@ -1,13 +1,25 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
 } from "class-validator";
+import { Visibility } from "../assets/visibility.enum";
 
 export class CreatePostDto {
+  @ApiPropertyOptional({
+    description: "Visibility of the post",
+    enum: Visibility,
+    default: Visibility.PUBLIC,
+  })
+  @IsOptional()
+  @IsEnum(Visibility, {
+    message: "Visibility must be PUBLIC, FOLLOWERS, or PRIVATE",
+  })
+  visibility?: Visibility = Visibility.PUBLIC;
   @ApiProperty({
     description: "The ID of the user creating the post",
     example: "uuid-string",
