@@ -17,7 +17,12 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { PostsService } from "./posts.service";
-import { CreatePostDto, QueryPostDto, UpdatePostDto } from "@repo/shared-types";
+import {
+  CreatePostDto,
+  QueryPostDto,
+  SearchPostDto,
+  UpdatePostDto,
+} from "@repo/shared-types";
 
 @ApiTags("Posts")
 @Controller("posts")
@@ -55,6 +60,31 @@ export class PostsController {
   @ApiResponse({ status: 200, description: "Posts retrieved successfully" })
   async findAll(@Query() query: QueryPostDto) {
     return this.postsService.findAll(query);
+  }
+
+  @Get("search")
+  @ApiOperation({ summary: "Search posts by content or tags" })
+  @ApiQuery({
+    name: "q",
+    required: true,
+    type: String,
+    description: "Search query",
+  })
+  @ApiQuery({
+    name: "skip",
+    required: false,
+    type: Number,
+    description: "Number of records to skip",
+  })
+  @ApiQuery({
+    name: "take",
+    required: false,
+    type: Number,
+    description: "Number of records to take",
+  })
+  @ApiResponse({ status: 200, description: "Posts retrieved successfully" })
+  async search(@Query() query: SearchPostDto) {
+    return this.postsService.search(query);
   }
 
   @Get(":id")

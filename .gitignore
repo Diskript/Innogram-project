@@ -43,5 +43,5 @@ yarn-error.log*
 .vscode
 
 plans
-**/*/tsconfig.tsbuildinfo
+tsconfig.tsbuildinfo
 ASSET_MANAGEMENT_IMPLEMENTATION_PLAN.md
