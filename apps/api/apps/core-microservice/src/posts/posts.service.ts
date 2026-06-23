@@ -4,6 +4,7 @@ import {
   CreatePostDto,
   JwtUser,
   QueryPostDto,
+  SearchPostDto,
   UpdatePostDto,
   Visibility,
 } from "@repo/shared-types";
@@ -93,6 +94,46 @@ export class PostsService {
         orderBy: {
           createdAt: "desc",
         },
+        include: {
+          postsAssets: {
+            include: {
+              asset: true,
+            },
+            orderBy: {
+              orderIndex: "asc",
+            },
+          },
+        },
+      }),
+      this.prismaService.client.post.count({ where }),
+    ]);
+
+    return {
+      data: posts,
+      total,
+      skip,
+      take,
+    };
+  }
+
+  async search(query: SearchPostDto) {
+    const { q, skip = 0, take = 20 } = query;
+
+    const where: Prisma.PostWhereInput = {
+      visibility: Visibility.PUBLIC,
+      archived: false,
+      OR: [
+        { content: { contains: q, mode: "insensitive" } },
+        { tags: { hasSome: [q] } },
+      ],
+    };
+
+    const [posts, total] = await Promise.all([
+      this.prismaService.client.post.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
         include: {
           postsAssets: {
             include: {
