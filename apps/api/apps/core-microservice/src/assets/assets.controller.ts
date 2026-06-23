@@ -1,11 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
+  Req,
+  Res,
   UploadedFile,
   UploadedFiles,
   UseGuards,
@@ -23,9 +27,11 @@ import {
 } from "@nestjs/swagger";
 import { AssetsService } from "./assets.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { Request, Response } from "express";
 import {
   CurrentUser,
   JwtUser,
+  UpdateAssetDto,
   UploadAssetDto,
 } from "@repo/shared-types";
 
@@ -252,5 +258,44 @@ export class AssetsController {
       page ?? 1,
       limit ?? 20,
     );
+  }
+
+  @Get(":id/download")
+  @ApiOperation({ summary: "Download/stream an asset" })
+  @ApiParam({ name: "id", type: String, description: "Asset UUID" })
+  @ApiResponse({ status: 200, description: "Asset streamed" })
+  @ApiResponse({ status: 404, description: "Asset not found" })
+  async download(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    return this.assetsService.downloadAsset(id, user, req, res);
+  }
+
+  @Patch(":id")
+  @ApiOperation({ summary: "Update asset metadata" })
+  @ApiParam({ name: "id", type: String, description: "Asset UUID" })
+  @ApiResponse({ status: 200, description: "Asset updated successfully" })
+  @ApiResponse({ status: 404, description: "Asset not found" })
+  async update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() updateAssetDto: UpdateAssetDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.assetsService.updateAsset(id, user, updateAssetDto);
+  }
+
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete an asset" })
+  @ApiParam({ name: "id", type: String, description: "Asset UUID" })
+  @ApiResponse({ status: 200, description: "Asset deleted successfully" })
+  @ApiResponse({ status: 404, description: "Asset not found" })
+  async remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.assetsService.deleteAsset(id, user);
   }
 }
