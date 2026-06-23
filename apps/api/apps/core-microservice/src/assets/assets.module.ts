@@ -4,10 +4,10 @@ import { AssetsController } from "./assets.controller";
 import { FileService } from "./file.service";
 import { ThumbnailService } from "./thumbnail.service";
 import { AccessControlService } from "./access-control.service";
-import { PrismaService } from "../prisma/prisma.service";
+import { PrismaModule } from "../prisma/prisma.module";
 
 @Module({
-  imports: [PrismaService],
+  imports: [PrismaModule],
   exports: [AccessControlService, AssetsService, FileService],
   providers: [
     AssetsService,
