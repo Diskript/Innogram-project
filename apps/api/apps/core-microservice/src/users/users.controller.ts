@@ -67,6 +67,54 @@ export class UsersController {
     return this.usersService.search(query);
   }
 
+  @Get(":id/followers")
+  @ApiOperation({ summary: "Get followers of a user" })
+  @ApiParam({ name: "id", type: String, description: "User UUID" })
+  @ApiQuery({
+    name: "skip",
+    required: false,
+    type: Number,
+    description: "Number of records to skip",
+  })
+  @ApiQuery({
+    name: "take",
+    required: false,
+    type: Number,
+    description: "Number of records to take",
+  })
+  @ApiResponse({ status: 200, description: "Followers retrieved successfully" })
+  @ApiResponse({ status: 404, description: "User not found" })
+  async getUserFollowers(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query() query: QueryUserDto,
+  ) {
+    return this.usersService.getUserFollowers(id, query.skip, query.take);
+  }
+
+  @Get(":id/following")
+  @ApiOperation({ summary: "Get users that a user follows" })
+  @ApiParam({ name: "id", type: String, description: "User UUID" })
+  @ApiQuery({
+    name: "skip",
+    required: false,
+    type: Number,
+    description: "Number of records to skip",
+  })
+  @ApiQuery({
+    name: "take",
+    required: false,
+    type: Number,
+    description: "Number of records to take",
+  })
+  @ApiResponse({ status: 200, description: "Following list retrieved successfully" })
+  @ApiResponse({ status: 404, description: "User not found" })
+  async getUserFollowing(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query() query: QueryUserDto,
+  ) {
+    return this.usersService.getUserFollowing(id, query.skip, query.take);
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Get a user by ID" })
   @ApiParam({ name: "id", type: String, description: "User UUID" })
