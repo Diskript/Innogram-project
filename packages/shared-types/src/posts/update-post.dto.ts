@@ -1,7 +1,17 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsBoolean, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsEnum, IsOptional, IsString } from "class-validator";
+import { Visibility } from "../assets/visibility.enum";
 
 export class UpdatePostDto {
+  @ApiPropertyOptional({
+    description: "Visibility of the post",
+    enum: Visibility,
+  })
+  @IsOptional()
+  @IsEnum(Visibility, {
+    message: "Visibility must be PUBLIC, FOLLOWERS, or PRIVATE",
+  })
+  visibility?: Visibility;
   @ApiPropertyOptional({
     description: "The content of the post",
     example: "This is my updated post!",

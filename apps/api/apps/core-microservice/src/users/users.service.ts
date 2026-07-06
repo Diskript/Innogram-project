@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { UpdateUserDto } from "@repo/shared-types";
+import { Prisma } from "@repo/database";
+import { SearchUserDto, UpdateUserDto } from "@repo/shared-types";
 
 @Injectable()
 export class UsersService {
@@ -37,6 +38,43 @@ export class UsersService {
           deleted: false,
         },
       }),
+    ]);
+
+    return {
+      data: users,
+      total,
+      skip,
+      take,
+    };
+  }
+
+  async search(query: SearchUserDto) {
+    const { q, skip = 0, take = 20 } = query;
+
+    const where: Prisma.UserWhereInput = {
+      deleted: false,
+      OR: [
+        { userName: { contains: q, mode: "insensitive" } },
+        { displayName: { contains: q, mode: "insensitive" } },
+      ],
+    };
+
+    const [users, total] = await Promise.all([
+      this.prismaService.client.user.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          userName: true,
+          displayName: true,
+          avatarUrl: true,
+          bio: true,
+          isPublic: true,
+        },
+      }),
+      this.prismaService.client.user.count({ where }),
     ]);
 
     return {

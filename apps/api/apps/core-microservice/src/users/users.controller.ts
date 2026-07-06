@@ -16,7 +16,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
-import { QueryUserDto, UpdateUserDto } from "@repo/shared-types";
+import { QueryUserDto, SearchUserDto, UpdateUserDto } from "@repo/shared-types";
 
 @ApiTags("Users")
 @Controller("users")
@@ -40,6 +40,31 @@ export class UsersController {
   @ApiResponse({ status: 200, description: "Users retrieved successfully" })
   async findAll(@Query() query: QueryUserDto) {
     return this.usersService.findAll(query.skip, query.take);
+  }
+
+  @Get("search")
+  @ApiOperation({ summary: "Search users by username or display name" })
+  @ApiQuery({
+    name: "q",
+    required: true,
+    type: String,
+    description: "Search query",
+  })
+  @ApiQuery({
+    name: "skip",
+    required: false,
+    type: Number,
+    description: "Number of records to skip",
+  })
+  @ApiQuery({
+    name: "take",
+    required: false,
+    type: Number,
+    description: "Number of records to take",
+  })
+  @ApiResponse({ status: 200, description: "Users retrieved successfully" })
+  async search(@Query() query: SearchUserDto) {
+    return this.usersService.search(query);
   }
 
   @Get(":id")

@@ -1,15 +1,25 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
 import {
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
 } from "class-validator";
-import { AssetDto } from "./assets.dto";
+import { Visibility } from "../assets/visibility.enum";
 
 export class CreatePostDto {
+  @ApiPropertyOptional({
+    description: "Visibility of the post",
+    enum: Visibility,
+    default: Visibility.PUBLIC,
+  })
+  @IsOptional()
+  @IsEnum(Visibility, {
+    message: "Visibility must be PUBLIC, FOLLOWERS, or PRIVATE",
+  })
+  visibility?: Visibility = Visibility.PUBLIC;
   @ApiProperty({
     description: "The ID of the user creating the post",
     example: "uuid-string",
@@ -29,11 +39,15 @@ export class CreatePostDto {
   content!: string;
 
   @ApiPropertyOptional({
-    description: "Array of media assets (images/videos) attached to the post",
-    type: [AssetDto],
+    description: "UUIDs of pre-uploaded assets to attach to the post",
+    type: [String],
+    example: ["uuid-1", "uuid-2"],
   })
   @IsOptional()
-  @IsArray({ message: "Assets must be an array" })
-  @Type(() => AssetDto)
-  assets?: AssetDto[];
+  @IsArray({ message: "Asset IDs must be an array" })
+  @IsUUID(undefined, {
+    each: true,
+    message: "Each asset ID must be a valid UUID",
+  })
+  assetIds?: string[];
 }
