@@ -15,15 +15,15 @@ export class PostsService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createPostDto: CreatePostDto) {
-    const { userId, content, assetIds, visibility } = createPostDto;
+    const { content, assetIds, visibility } = createPostDto;
 
     const post = await this.prismaService.client.post.create({
       data: {
-        userId,
+        userId: createPostDto.userId!,
         content,
         visibility: visibility ?? Visibility.PUBLIC,
-        createdBy: userId,
-        updatedBy: userId,
+        createdBy: createPostDto.userId!,
+        updatedBy: createPostDto.userId!,
         ...(assetIds &&
           assetIds.length > 0 && {
             postsAssets: {
