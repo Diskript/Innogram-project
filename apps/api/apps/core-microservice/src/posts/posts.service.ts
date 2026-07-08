@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   CreatePostDto,
@@ -189,13 +189,17 @@ export class PostsService {
     return post;
   }
 
-  async update(id: string, updatePostDto: UpdatePostDto) {
+  async update(id: string, updatePostDto: UpdatePostDto, userId: string) {
     const post = await this.prismaService.client.post.findUnique({
       where: { id },
     });
 
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    if (post.userId !== userId) {
+      throw new ForbiddenException("You can only update your own posts");
     }
 
     return this.prismaService.client.post.update({
@@ -217,13 +221,17 @@ export class PostsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     const post = await this.prismaService.client.post.findUnique({
       where: { id },
     });
 
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    if (post.userId !== userId) {
+      throw new ForbiddenException("You can only delete your own posts");
     }
 
     return this.prismaService.client.post.delete({
