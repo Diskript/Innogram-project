@@ -9,3 +9,4 @@ export * from "./assets-creation.dto";
 export * from "./comment.dto";
 export * from "./create-comment.dto";
 export * from "./query-comment.dto";
+export * from "./query-post-likes.dto";
