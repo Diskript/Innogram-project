@@ -20,6 +20,7 @@ export * from "./users/index";
 export * from "./profile/index";
 export * from "./user.interface";
 export * from "./assets/index";
+export * from "./notifications/index";
 
 // Roles as const assertion for better type inference and JS output
 export const Roles = {
