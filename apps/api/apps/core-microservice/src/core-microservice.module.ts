@@ -7,9 +7,10 @@ import { ProfileModule } from "./profile/profile.module";
 import { PostsModule } from "./posts/posts.module";
 import { AssetsModule } from './assets/assets.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MentionsModule } from './mentions/mentions.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, ProfileModule, PostsModule, AssetsModule, NotificationsModule],
+  imports: [UsersModule, AuthModule, ProfileModule, PostsModule, AssetsModule, NotificationsModule, MentionsModule],
   controllers: [CoreMicroserviceController],
   providers: [CoreMicroserviceService],
 })
