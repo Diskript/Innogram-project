@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { CommentsService } from "./comments.service";
 import { PrismaService } from "../../prisma/prisma.service";
+import { MentionsService } from "../../mentions/mentions.service";
 import {
   NotFoundException,
   ForbiddenException,
@@ -56,6 +57,10 @@ describe("CommentsService", () => {
               },
             },
           },
+        },
+        {
+          provide: MentionsService,
+          useValue: { notifyMentionedUsers: jest.fn() },
         },
       ],
     }).compile();

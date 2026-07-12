@@ -5,10 +5,14 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { CreateCommentDto, QueryCommentDto } from "@repo/shared-types";
+import { MentionsService } from "../../mentions/mentions.service";
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly mentionsService: MentionsService,
+  ) {}
 
   async create(postId: string, userId: string, dto: CreateCommentDto) {
     const post = await this.prismaService.client.post.findUnique({
@@ -31,7 +35,7 @@ export class CommentsService {
       }
     }
 
-    return this.prismaService.client.comment.create({
+    const comment = await this.prismaService.client.comment.create({
       data: {
         postId,
         userId,
@@ -51,6 +55,14 @@ export class CommentsService {
         },
       },
     });
+
+    await this.mentionsService.notifyMentionedUsers(
+      userId,
+      comment.id,
+      dto.content,
+    );
+
+    return comment;
   }
 
   async findByPost(postId: string, query: QueryCommentDto) {

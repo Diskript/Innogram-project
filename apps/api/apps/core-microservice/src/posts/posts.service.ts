@@ -9,10 +9,14 @@ import {
   Visibility,
 } from "@repo/shared-types";
 import { Prisma } from "@repo/database";
+import { MentionsService } from "../mentions/mentions.service";
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly mentionsService: MentionsService,
+  ) {}
 
   async create(createPostDto: CreatePostDto) {
     const { content, assetIds, visibility } = createPostDto;
@@ -45,6 +49,12 @@ export class PostsService {
         },
       },
     });
+
+    await this.mentionsService.notifyMentionedUsers(
+      createPostDto.userId!,
+      post.id,
+      content,
+    );
 
     return post;
   }
