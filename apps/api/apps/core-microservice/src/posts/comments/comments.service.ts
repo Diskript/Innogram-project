@@ -168,12 +168,13 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    const existingLike =
-      await this.prismaService.client.commentLike.findUnique({
+    const existingLike = await this.prismaService.client.commentLike.findUnique(
+      {
         where: {
           commentId_userId: { commentId, userId },
         },
-      });
+      },
+    );
 
     if (existingLike) {
       await this.prismaService.client.commentLike.delete({

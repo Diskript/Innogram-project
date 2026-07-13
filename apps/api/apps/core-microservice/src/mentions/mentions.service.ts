@@ -13,7 +13,9 @@ export class MentionsService {
   async resolveMentionedUsers(
     usernames: string[],
   ): Promise<{ id: string; userName: string }[]> {
-    if (usernames.length === 0) return [];
+    if (usernames.length === 0) {
+      return [];
+    }
     return this.prismaService.client.user.findMany({
       where: { userName: { in: usernames }, deleted: false },
       select: { id: true, userName: true },
@@ -26,12 +28,16 @@ export class MentionsService {
     content: string,
   ) {
     const usernames = extractMentions(content);
-    if (usernames.length === 0) return;
+    if (usernames.length === 0) {
+      return;
+    }
 
     const users = await this.resolveMentionedUsers(usernames);
 
     for (const user of users) {
-      if (user.id === actorId) continue;
+      if (user.id === actorId) {
+        continue;
+      }
       await this.notificationsService.create(
         user.id,
         actorId,

@@ -39,10 +39,7 @@ export class NotificationsController {
   @ApiParam({ name: "id", type: String, description: "Notification ID" })
   @ApiResponse({ status: 200, description: "Notification marked as read" })
   @ApiResponse({ status: 404, description: "Notification not found" })
-  async markAsRead(
-    @Param("id") id: string,
-    @CurrentUser() user: JwtUser,
-  ) {
+  async markAsRead(@Param("id") id: string, @CurrentUser() user: JwtUser) {
     return this.notificationsService.markAsRead(id, user.userId);
   }
 

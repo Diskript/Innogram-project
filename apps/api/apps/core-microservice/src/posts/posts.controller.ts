@@ -128,7 +128,10 @@ export class PostsController {
   @ApiParam({ name: "id", type: String, description: "Post UUID" })
   @ApiResponse({ status: 204, description: "Post archived successfully" })
   @ApiResponse({ status: 404, description: "Post not found" })
-  async remove(@Param("id", ParseUUIDPipe) id: string, @CurrentUser() user: JwtUser) {
+  async remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
     return this.postsService.remove(id, user.userId);
   }
 }

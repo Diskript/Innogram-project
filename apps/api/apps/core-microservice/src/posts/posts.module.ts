@@ -9,7 +9,14 @@ import { CommentsModule } from "./comments/comments.module";
 import { MentionsModule } from "../mentions/mentions.module";
 
 @Module({
-  imports: [PrismaModule, FeedModule, ArchiveModule, LikesModule, CommentsModule, MentionsModule],
+  imports: [
+    PrismaModule,
+    FeedModule,
+    ArchiveModule,
+    LikesModule,
+    CommentsModule,
+    MentionsModule,
+  ],
   controllers: [PostsController],
   providers: [PostsService],
 })

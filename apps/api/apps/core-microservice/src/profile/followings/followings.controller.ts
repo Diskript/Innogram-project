@@ -26,7 +26,10 @@ export class FollowingsController {
 
   @Get()
   @ApiOperation({ summary: "Get list of users I follow" })
-  @ApiResponse({ status: 200, description: "Followed users retrieved successfully" })
+  @ApiResponse({
+    status: 200,
+    description: "Followed users retrieved successfully",
+  })
   async getFollows(@CurrentUser() user: JwtUser) {
     return this.followingsService.getFollows(user);
   }
@@ -52,7 +55,11 @@ export class FollowingsController {
 
   @Post("requests/:userId/accept")
   @ApiOperation({ summary: "Accept a follow request" })
-  @ApiParam({ name: "userId", type: String, description: "Requester user UUID" })
+  @ApiParam({
+    name: "userId",
+    type: String,
+    description: "Requester user UUID",
+  })
   @ApiResponse({ status: 201, description: "Follow request accepted" })
   @ApiResponse({ status: 400, description: "No pending request found" })
   async acceptFollowRequest(
@@ -64,7 +71,11 @@ export class FollowingsController {
 
   @Post("requests/:userId/reject")
   @ApiOperation({ summary: "Reject a follow request" })
-  @ApiParam({ name: "userId", type: String, description: "Requester user UUID" })
+  @ApiParam({
+    name: "userId",
+    type: String,
+    description: "Requester user UUID",
+  })
   @ApiResponse({ status: 201, description: "Follow request rejected" })
   @ApiResponse({ status: 400, description: "No pending request found" })
   async rejectFollowRequest(

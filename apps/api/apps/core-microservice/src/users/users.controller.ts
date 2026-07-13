@@ -114,7 +114,10 @@ export class UsersController {
     type: Number,
     description: "Number of records to take",
   })
-  @ApiResponse({ status: 200, description: "Following list retrieved successfully" })
+  @ApiResponse({
+    status: 200,
+    description: "Following list retrieved successfully",
+  })
   @ApiResponse({ status: 404, description: "User not found" })
   async getUserFollowing(
     @Param("id", ParseUUIDPipe) id: string,
