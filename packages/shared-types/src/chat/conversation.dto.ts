@@ -1,26 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
-export class ConversationResponse {
+export class MessageBrief {
   @ApiProperty()
   id!: string;
 
-  @ApiPropertyOptional()
-  name?: string;
+  @ApiProperty()
+  senderId!: string;
 
   @ApiProperty()
-  isGroup!: boolean;
+  content!: string;
 
   @ApiProperty()
   createdAt!: Date;
-
-  @ApiProperty()
-  updatedAt!: Date;
-
-  @ApiProperty()
-  participants!: ParticipantInfo[];
-
-  @ApiPropertyOptional()
-  lastMessage?: MessageBrief;
 }
 
 export class ParticipantInfo {
@@ -48,16 +39,25 @@ export class ParticipantInfo {
   };
 }
 
-export class MessageBrief {
+export class ConversationResponse {
   @ApiProperty()
   id!: string;
 
-  @ApiProperty()
-  senderId!: string;
+  @ApiPropertyOptional()
+  name?: string;
 
   @ApiProperty()
-  content!: string;
+  isGroup!: boolean;
 
   @ApiProperty()
   createdAt!: Date;
+
+  @ApiProperty()
+  updatedAt!: Date;
+
+  @ApiProperty()
+  participants!: ParticipantInfo[];
+
+  @ApiPropertyOptional()
+  lastMessage?: MessageBrief;
 }
