@@ -8,6 +8,9 @@ import { PostsModule } from "./posts/posts.module";
 import { AssetsModule } from "./assets/assets.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { MentionsModule } from "./mentions/mentions.module";
+import { WsModule } from "./ws/ws.module";
+import { EventsModule } from "./events/events.module";
+import { AmqpModule } from "./amqp/amqp.module";
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { MentionsModule } from "./mentions/mentions.module";
     AssetsModule,
     NotificationsModule,
     MentionsModule,
+    WsModule,
+    EventsModule,
+    AmqpModule,
   ],
   controllers: [CoreMicroserviceController],
   providers: [CoreMicroserviceService],
