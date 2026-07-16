@@ -1,15 +1,21 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { NotificationsService } from "./notifications.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { EventsService } from "../events/events.service";
 import { NotFoundException } from "@nestjs/common";
 
 describe("NotificationsService", () => {
   let service: NotificationsService;
+  let eventsService: EventsService;
 
   const mockCreate = jest.fn();
   const mockFindMany = jest.fn();
   const mockCount = jest.fn();
   const mockUpdateMany = jest.fn();
+
+  const mockEventsService = {
+    emit: jest.fn(),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -30,10 +36,12 @@ describe("NotificationsService", () => {
             },
           },
         },
+        { provide: EventsService, useValue: mockEventsService },
       ],
     }).compile();
 
     service = module.get<NotificationsService>(NotificationsService);
+    eventsService = module.get<EventsService>(EventsService);
   });
 
   it("should be defined", () => {
@@ -41,33 +49,36 @@ describe("NotificationsService", () => {
   });
 
   describe("create", () => {
-    it("should create a notification record", async () => {
-      const expected = {
+    it("should create a notification and emit notification.created event", async () => {
+      const created = {
         id: "notif-1",
         userId: "user-2",
         actorId: "user-1",
-        type: "LIKE",
-        entityId: "post-1",
+        type: "MENTION",
+        entityId: "msg-1",
         read: false,
         createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      mockCreate.mockResolvedValue(expected);
+      mockCreate.mockResolvedValue(created);
 
-      const result = await service.create("user-2", "user-1", "LIKE", "post-1");
+      const result = await service.create("user-2", "user-1", "MENTION", "msg-1");
 
       expect(mockCreate).toHaveBeenCalledWith({
-        data: {
-          userId: "user-2",
-          actorId: "user-1",
-          type: "LIKE",
-          entityId: "post-1",
-        },
+        data: { userId: "user-2", actorId: "user-1", type: "MENTION", entityId: "msg-1" },
       });
-      expect(result).toEqual(expected);
+      expect(result).toEqual(created);
+      expect(mockEventsService.emit).toHaveBeenCalledWith("notification.created", {
+        notificationId: "notif-1",
+        userId: "user-2",
+        actorId: "user-1",
+        type: "MENTION",
+        entityId: "msg-1",
+      });
     });
 
     it("should create a notification without entityId", async () => {
-      mockCreate.mockResolvedValue({
+      const created = {
         id: "notif-2",
         userId: "user-2",
         actorId: "user-1",
@@ -75,12 +86,18 @@ describe("NotificationsService", () => {
         entityId: null,
         read: false,
         createdAt: new Date(),
-      });
+        updatedAt: new Date(),
+      };
+      mockCreate.mockResolvedValue(created);
 
       await service.create("user-2", "user-1", "FOLLOW");
 
-      expect(mockCreate).toHaveBeenCalledWith({
-        data: { userId: "user-2", actorId: "user-1", type: "FOLLOW" },
+      expect(mockEventsService.emit).toHaveBeenCalledWith("notification.created", {
+        notificationId: "notif-2",
+        userId: "user-2",
+        actorId: "user-1",
+        type: "FOLLOW",
+        entityId: null,
       });
     });
   });

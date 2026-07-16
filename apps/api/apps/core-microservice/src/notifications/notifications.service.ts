@@ -1,20 +1,34 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { EventsService } from "../events/events.service";
 import { QueryNotificationDto } from "@repo/shared-types";
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly eventsService: EventsService,
+  ) {}
 
   async create(
     userId: string,
     actorId: string,
     type: string,
-    entityId?: string,
+    entityId?: string | null,
   ) {
-    return this.prismaService.client.notification.create({
+    const notification = await this.prismaService.client.notification.create({
       data: { userId, actorId, type, entityId },
     });
+
+    this.eventsService.emit("notification.created", {
+      notificationId: notification.id,
+      userId,
+      actorId,
+      type,
+      entityId: entityId ?? null,
+    });
+
+    return notification;
   }
 
   async findByUser(userId: string, query: QueryNotificationDto) {

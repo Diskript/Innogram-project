@@ -1,9 +1,11 @@
 import { Global, Module, OnModuleInit } from "@nestjs/common";
 import { AmqpService } from "./amqp.service";
+import { NotificationPublisher } from "./notification-publisher";
+import { NotificationConsumer } from "./notification-consumer";
 
 @Global()
 @Module({
-  providers: [AmqpService],
+  providers: [AmqpService, NotificationPublisher, NotificationConsumer],
   exports: [AmqpService],
 })
 export class AmqpModule implements OnModuleInit {
