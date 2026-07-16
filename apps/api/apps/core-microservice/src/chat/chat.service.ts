@@ -11,6 +11,10 @@ import {
   QueryMessageDto,
   SendMessageDto,
   UpdateMessageDto,
+  ConversationWithParticipants,
+  ParticipantWithUser,
+  MessageWithSenderAndAssets,
+  MessageAssetRaw,
 } from "@repo/shared-types";
 
 @Injectable()
@@ -62,10 +66,7 @@ export class ChatService {
     return this.toConversationResponse(conversation);
   }
 
-  async findUserConversations(
-    userId: string,
-    query: QueryConversationDto,
-  ) {
+  async findUserConversations(userId: string, query: QueryConversationDto) {
     const { skip = 0, take = 20 } = query;
 
     const participantWhere = {
@@ -341,11 +342,13 @@ export class ChatService {
       });
 
     if (!participant || participant.leftAt) {
-      throw new ForbiddenException("You are not a participant in this conversation");
+      throw new ForbiddenException(
+        "You are not a participant in this conversation",
+      );
     }
   }
 
-  private toConversationResponse(conversation: any) {
+  private toConversationResponse(conversation: ConversationWithParticipants) {
     const messages = conversation.messages ?? [];
     const lastMessage = messages.length > 0 ? messages[0] : undefined;
 
@@ -355,7 +358,7 @@ export class ChatService {
       isGroup: conversation.isGroup,
       createdAt: conversation.createdAt,
       updatedAt: conversation.updatedAt,
-      participants: conversation.participants.map((p: any) => ({
+      participants: conversation.participants.map((p: ParticipantWithUser) => ({
         id: p.id,
         userId: p.userId,
         role: p.role,
@@ -376,7 +379,7 @@ export class ChatService {
     };
   }
 
-  private toMessageResponse(message: any) {
+  private toMessageResponse(message: MessageWithSenderAndAssets) {
     return {
       id: message.id,
       conversationId: message.conversationId,
@@ -385,7 +388,7 @@ export class ChatService {
       createdAt: message.createdAt,
       updatedAt: message.updatedAt,
       sender: message.sender,
-      assets: message.assets?.map((ma: any) => ({
+      assets: message.assets?.map((ma: MessageAssetRaw) => ({
         id: ma.id,
         assetId: ma.assetId,
         fileName: ma.asset.fileName,
