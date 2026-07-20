@@ -55,7 +55,11 @@ export class MessageConsumer implements OnModuleInit {
           ...(msg.properties?.headers as Record<string, unknown>),
           "x-retry-count": retryCount + 1,
         };
-        (msg as any).properties = { ...msg.properties, headers: newHeaders };
+        (msg as unknown as { properties: Record<string, unknown> }).properties =
+          {
+            ...msg.properties,
+            headers: newHeaders,
+          };
         this.amqpService.nack(msg, true);
       } else {
         this.logger.warn(

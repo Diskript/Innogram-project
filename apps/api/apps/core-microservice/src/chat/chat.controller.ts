@@ -10,13 +10,7 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import {
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { ChatService } from "./chat.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import {
