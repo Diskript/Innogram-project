@@ -15,6 +15,7 @@ const mockPrismaClient = {
 describe("WsGateway", () => {
   let gateway: WsGateway;
   let wsAuthService: WsAuthService;
+  let module: TestingModule;
 
   const mockSocket = {
     id: "socket-1",
@@ -34,7 +35,7 @@ describe("WsGateway", () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         WsGateway,
         {
@@ -230,8 +231,8 @@ describe("WsGateway", () => {
 
   describe("onModuleInit", () => {
     it("should listen for message.sent and broadcast typing:stop", () => {
-      const onSpy = jest.fn();
-      gateway["eventsService"] = { on: onSpy } as any;
+      const eventsService = module.get<EventsService>(EventsService);
+      const onSpy = jest.spyOn(eventsService, "on");
       gateway.onModuleInit();
       expect(onSpy).toHaveBeenCalledWith("message.sent", expect.any(Function));
 
