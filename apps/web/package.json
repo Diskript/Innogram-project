@@ -11,10 +11,18 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
+    "@repo/shared-types": "workspace:^",
     "@repo/ui": "workspace:*",
+    "@tanstack/react-query": "^5.101.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.25.0",
     "next": "16.2.1",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.82.0",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -22,7 +30,10 @@
     "@types/node": "^25.5.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "autoprefixer": "^10.5.4",
     "eslint": "^9.39.1",
+    "postcss": "^8.5.21",
+    "tailwindcss": "^4.3.3",
     "typescript": "5.9.2"
   }
 }
