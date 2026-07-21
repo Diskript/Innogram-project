@@ -1,0 +1,28 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2021",
+    "lib": ["ES2021"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "composite": true,
+    "paths": {
+      "@repo/shared-types": ["../../packages/shared-types/dist"],
+      "@repo/database": ["../../packages/database/dist/src"]
+    }
+  },
+  "include": ["apps/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "apps/**/dist"]
+}
