@@ -46,7 +46,9 @@ export class TypingService {
   stopTyping(userId: string, conversationId: string): boolean {
     const k = this.key(userId, conversationId);
     const existing = this.state.get(k);
-    if (!existing) return false;
+    if (!existing) {
+      return false;
+    }
     clearTimeout(existing.timeout);
     this.state.delete(k);
     return true;
