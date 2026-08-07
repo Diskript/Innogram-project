@@ -28,19 +28,20 @@ function AuthCallbackInner() {
 
   useEffect(() => {
     const success = searchParams.get("success");
-    if (success !== "true") {
-      setStatus("error");
-      return;
-    }
+    const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
 
-    const authUrl =
-      process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
-    fetch(`${authUrl}/jwt-auth/session`, { credentials: "include" })
-      .then((res) => {
+    async function handleCallback() {
+      if (success !== "true") {
+        setStatus("error");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${authUrl}/jwt-auth/session`, {
+          credentials: "include",
+        });
         if (!res.ok) throw new Error("No session");
-        return res.json();
-      })
-      .then((data) => {
+        const data = await res.json();
         setAccessToken(data.accessToken);
         if (data.refreshToken) {
           localStorage.setItem("refreshToken", data.refreshToken);
@@ -48,13 +49,15 @@ function AuthCallbackInner() {
         document.cookie = "innogram_session=true; path=/; max-age=604800";
         setStatus("success");
         setTimeout(() => router.push("/"), 1000);
-      })
-      .catch(() => {
+      } catch {
         // Session extraction may fail in local dev (cross-origin cookie
         // from auth service on port 3002). User can still use login form.
         setStatus("error");
         setTimeout(() => router.push("/login"), 3000);
-      });
+      }
+    }
+
+    void handleCallback();
   }, [searchParams, router]);
 
   return (

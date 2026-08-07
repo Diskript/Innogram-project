@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { JwtUser } from "@repo/shared-types";
-import { authApi, setAccessToken, ApiError } from "@/lib/api-client";
+import { authApi, setAccessToken } from "@/lib/api-client";
 
 interface AuthTokensResponse {
   message: string;
@@ -22,16 +22,6 @@ interface RegisterResponse {
   message: string;
   userId: string;
   userEmail: string;
-}
-
-interface ValidateResponse {
-  valid: boolean;
-  payload?: {
-    sub: string;
-    email: string;
-    iat: number;
-    exp: number;
-  };
 }
 
 interface AuthContextValue {
@@ -64,34 +54,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.cookie =
       "innogram_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }, []);
-
   useEffect(() => {
     const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) {
-      setIsLoading(false);
-      return;
-    }
 
-    const authUrl =
-      process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
-    fetch(`${authUrl}/jwt-auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    })
-      .then((res) => {
+    async function restoreSession() {
+      if (!refreshToken) {
+        return;
+      }
+
+      const authUrl =
+        process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
+      try {
+        const res = await fetch(`${authUrl}/jwt-auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        });
         if (!res.ok) throw new Error("Refresh failed");
-        return res.json() as Promise<AuthTokensResponse>;
-      })
-      .then((data) => {
+        const data: AuthTokensResponse = await res.json();
         setAccessToken(data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);
         setUser({ userId: data.userId, email: "" });
-      })
-      .catch(() => {
+      } catch {
         clearSession();
-      })
-      .finally(() => setIsLoading(false));
+      }
+    }
+
+    void restoreSession().finally(() => setIsLoading(false));
   }, [clearSession]);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -129,8 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   const googleLogin = useCallback(() => {
-    const authUrl =
-      process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
+    const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
     window.location.href = `${authUrl}/google/google`;
   }, []);
 

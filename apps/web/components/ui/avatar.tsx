@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import { User } from "lucide-react";
 
 interface AvatarProps {
@@ -14,12 +15,7 @@ const sizeClasses = {
   lg: "h-16 w-16 text-lg",
 };
 
-export function Avatar({
-  src,
-  alt = "",
-  size = "md",
-  className,
-}: AvatarProps) {
+export function Avatar({ src, alt = "", size = "md", className }: AvatarProps) {
   const initials = alt
     ? alt
         .split(" ")
@@ -31,10 +27,16 @@ export function Avatar({
 
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={alt}
-        className={cn("rounded-full object-cover", sizeClasses[size], className)}
+        width={64}
+        height={64}
+        className={cn(
+          "rounded-full object-cover",
+          sizeClasses[size],
+          className,
+        )}
       />
     );
   }
