@@ -124,3 +124,54 @@ export const authApi = new ApiClient(
 export const api = new ApiClient(
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
 );
+
+export interface ProfileCounts {
+  createdPosts: number;
+  followers: number;
+  following: number;
+  comments: number;
+}
+
+export interface OwnProfile {
+  id: string;
+  userName: string;
+  displayName: string;
+  birthday: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  isPublic: boolean;
+  deleted: boolean;
+  _count: ProfileCounts;
+}
+
+export interface PublicProfile {
+  id: string;
+  userName: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  isPublic: boolean;
+  birthday: string | null;
+}
+
+export interface UpdateProfileDto {
+  displayName?: string;
+  birthday?: string;
+  bio?: string;
+  avatarUrl?: string;
+  isPublic?: boolean;
+}
+
+export function getOwnProfile(): Promise<OwnProfile> {
+  return api.get<OwnProfile>("/profile");
+}
+
+export function updateProfile(
+  dto: UpdateProfileDto,
+): Promise<PublicProfile> {
+  return api.patch<PublicProfile>("/profile", dto);
+}
+
+export function getPublicProfile(username: string): Promise<PublicProfile> {
+  return api.get<PublicProfile>(`/profile/${encodeURIComponent(username)}`);
+}

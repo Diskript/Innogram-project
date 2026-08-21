@@ -28,9 +28,10 @@ export const signupSchema = z
   });
 
 export const profileSchema = z.object({
-  displayName: z.string().min(1).max(50),
+  displayName: z.string().min(1, "Display name is required").max(50),
   birthday: z.string().optional(),
   bio: z.string().max(500).optional(),
+  avatarUrl: z.string().max(500).optional(),
   isPublic: z.boolean().optional(),
 });
 
