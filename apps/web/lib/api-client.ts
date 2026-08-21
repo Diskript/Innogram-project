@@ -166,9 +166,7 @@ export function getOwnProfile(): Promise<OwnProfile> {
   return api.get<OwnProfile>("/profile");
 }
 
-export function updateProfile(
-  dto: UpdateProfileDto,
-): Promise<PublicProfile> {
+export function updateProfile(dto: UpdateProfileDto): Promise<PublicProfile> {
   return api.patch<PublicProfile>("/profile", dto);
 }
 
