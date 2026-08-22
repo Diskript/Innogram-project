@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "bash": {
+      "git *": "allow",
+      "git push": "ask",
+      "git push *": "ask",
+      "git commit": "ask",
+      "git commit *": "ask",
+      "git reset": "ask",
+      "git reset *": "ask",
+      "git merge": "ask",
+      "git merge *": "ask",
+      "git rebase": "ask",
+      "git rebase *": "ask",
+      "git revert": "ask",
+      "git revert *": "ask",
+      "git checkout": "ask",
+      "git checkout *": "ask",
+      "git branch -d *": "ask",
+      "git branch -D *": "ask",
+      "git branch --delete *": "ask",
+      "git tag -d *": "ask",
+      "git rm *": "ask",
+      "git mv *": "ask",
+      "git clean *": "ask",
+      "git am *": "ask",
+      "git cherry-pick *": "ask",
+      "git update-ref *": "ask",
+      "git update-index *": "ask",
+      "git gc *": "ask"
+    }
+  },
+  "compaction": {
+    "auto": false
+  }
+}
