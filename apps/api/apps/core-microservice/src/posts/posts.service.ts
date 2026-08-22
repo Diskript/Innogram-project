@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   CreatePostDto,
@@ -9,21 +13,25 @@ import {
   Visibility,
 } from "@repo/shared-types";
 import { Prisma } from "@repo/database";
+import { MentionsService } from "../mentions/mentions.service";
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly mentionsService: MentionsService,
+  ) {}
 
   async create(createPostDto: CreatePostDto) {
-    const { userId, content, assetIds, visibility } = createPostDto;
+    const { content, assetIds, visibility } = createPostDto;
 
     const post = await this.prismaService.client.post.create({
       data: {
-        userId,
+        userId: createPostDto.userId!,
         content,
         visibility: visibility ?? Visibility.PUBLIC,
-        createdBy: userId,
-        updatedBy: userId,
+        createdBy: createPostDto.userId!,
+        updatedBy: createPostDto.userId!,
         ...(assetIds &&
           assetIds.length > 0 && {
             postsAssets: {
@@ -45,6 +53,12 @@ export class PostsService {
         },
       },
     });
+
+    await this.mentionsService.notifyMentionedUsers(
+      createPostDto.userId!,
+      post.id,
+      content,
+    );
 
     return post;
   }
@@ -189,13 +203,17 @@ export class PostsService {
     return post;
   }
 
-  async update(id: string, updatePostDto: UpdatePostDto) {
+  async update(id: string, updatePostDto: UpdatePostDto, userId: string) {
     const post = await this.prismaService.client.post.findUnique({
       where: { id },
     });
 
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    if (post.userId !== userId) {
+      throw new ForbiddenException("You can only update your own posts");
     }
 
     return this.prismaService.client.post.update({
@@ -217,13 +235,17 @@ export class PostsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     const post = await this.prismaService.client.post.findUnique({
       where: { id },
     });
 
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    if (post.userId !== userId) {
+      throw new ForbiddenException("You can only delete your own posts");
     }
 
     return this.prismaService.client.post.delete({

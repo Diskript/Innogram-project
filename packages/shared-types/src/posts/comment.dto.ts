@@ -2,34 +2,42 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsArray,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
 } from "class-validator";
 
 export class Comment {
   @ApiProperty({
+    description: "The ID of the comment",
+    example: "0192c7b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  })
+  @IsNotEmpty({ message: "Comment ID is required" })
+  @IsUUID("7", { message: "Comment ID must be a valid UUID" })
+  id!: string;
+
+  @ApiProperty({
     description: "The ID of the post this comment belongs to",
-    example: 1,
+    example: "0192c7b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
   })
   @IsNotEmpty({ message: "Post ID is required" })
-  @IsNumber({}, { message: "Post ID must be a number" })
-  postId!: number;
+  @IsUUID("7", { message: "Post ID must be a valid UUID" })
+  postId!: string;
 
   @ApiProperty({
     description: "The ID of the user who created this comment",
-    example: 1,
+    example: "0192c7b0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
   })
   @IsNotEmpty({ message: "User ID is required" })
-  @IsNumber({}, { message: "User ID must be a number" })
-  userId!: number;
+  @IsUUID("7", { message: "User ID must be a valid UUID" })
+  userId!: string;
 
   @ApiPropertyOptional({
     description: "The parent comment if this is a reply",
     type: () => Comment,
   })
   @IsOptional()
-  parrentComment?: Comment;
+  parentComment?: Comment;
 
   @ApiPropertyOptional({
     description: "Child comments (replies to this comment)",

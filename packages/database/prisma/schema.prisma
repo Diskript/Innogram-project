@@ -39,7 +39,7 @@ enum FollowStatus {
 }
 
 model User {
-  id        String   @id() @default(uuid())
+  id        String   @id() @default(uuid(7))
   role      String   @default("USER")
   disabled  Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -82,6 +82,11 @@ model User {
   conversationParticipants Conversation_Participant[]
   sentMessages             Message[]                  @relation("MessageSender")
 
+  postLikes           PostLike[]
+  commentLikes        CommentLike[]
+  notifications       Notification[]   @relation("NotificationRecipient")
+  actedNotifications  Notification[]   @relation("NotificationActor")
+
   @@index([createdBy])
   @@index([updatedBy])
   @@index([role, disabled])
@@ -92,7 +97,7 @@ model User {
 }
 
 model Account {
-  id            String    @id() @default(uuid())
+  id            String    @id() @default(uuid(7))
   userId        String
   email         String
   passwordHash  String    @db.VarChar(255)
@@ -112,7 +117,7 @@ model Account {
 }
 
 model Post {
-  id         String     @id @default(uuid())
+  id         String     @id @default(uuid(7))
   userId     String
   content    String
   visibility Visibility @default(PUBLIC)
@@ -128,6 +133,7 @@ model Post {
   tags        String[]
   comments    Comment[]      @relation("post_id")
   postsAssets Posts_Assets[]
+  postLikes   PostLike[]
 
   @@index([createdAt(sort: Desc)])
   @@index([userId, archived, visibility, createdAt])
@@ -140,7 +146,7 @@ model Post {
 }
 
 model Comment {
-  id              String    @id @default(uuid())
+  id              String    @id @default(uuid(7))
   postId          String
   post            Post      @relation("post_id", fields: [postId], references: [id], onDelete: Cascade)
   userId          String
@@ -155,6 +161,7 @@ model Comment {
   creator         User?     @relation("CommentCreation", fields: [createdBy], references: [id])
   updatedBy       String?   @map("updated_by")
   updater         User?     @relation("CommentUpdate", fields: [updatedBy], references: [id])
+  commentLikes    CommentLike[]
 
   @@index([postId, createdAt])
   @@index([userId, createdAt])
@@ -164,8 +171,55 @@ model Comment {
   @@map("comments")
 }
 
+model PostLike {
+  id        String   @id @default(uuid(7))
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("post_likes")
+}
+
+model CommentLike {
+  id        String   @id @default(uuid(7))
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
+  @@map("comment_likes")
+}
+
+model Notification {
+  id        String   @id @default(uuid(7))
+  userId    String
+  actorId   String
+  type      String
+  entityId  String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor User @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
 model Asset {
-  id            String  @id @default(uuid())
+  id            String  @id @default(uuid(7))
   fileName      String  @db.VarChar(255)
   originalName  String  @db.VarChar(255)
   filePath      String  @db.VarChar(500)
@@ -208,7 +262,7 @@ model Asset {
 }
 
 model Posts_Assets {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid(7))
   postId     String
   assetId    String
   post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -232,7 +286,7 @@ model Posts_Assets {
 }
 
 model Conversation {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid(7))
   name      String?
   isGroup   Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -247,7 +301,7 @@ model Conversation {
 }
 
 model Conversation_Participant {
-  id             String          @id @default(uuid())
+  id             String          @id @default(uuid(7))
   conversationId String
   userId         String
   role           ParticipantRole @default(MEMBER)
@@ -265,7 +319,7 @@ model Conversation_Participant {
 }
 
 model Message {
-  id             String   @id @default(uuid())
+  id             String   @id @default(uuid(7))
   conversationId String
   senderId       String
   content        String
@@ -282,7 +336,7 @@ model Message {
 }
 
 model Message_Assets {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid(7))
   messageId String
   assetId   String
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
@@ -295,7 +349,7 @@ model Message_Assets {
 }
 
 model Users_Follows {
-  id          String       @id @default(uuid())
+  id          String       @id @default(uuid(7))
   followerId  String
   followingId String
   status      FollowStatus @default(ACCEPTED)

@@ -9,9 +9,11 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches/ ./patches/
 COPY apps/api/apps/auth-microservice/package.json ./apps/api/apps/auth-microservice/
 COPY packages/database/package.json ./packages/database/
 COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -20,6 +22,7 @@ RUN pnpm install --frozen-lockfile
 COPY apps/api/apps/auth-microservice ./apps/api/apps/auth-microservice
 COPY packages/database ./packages/database
 COPY packages/shared-types ./packages/shared-types
+COPY packages/typescript-config ./packages/typescript-config
 COPY apps/api/nest-cli.json apps/api/tsconfig.json apps/api/tsconfig.build.json ./
 
 # Build the application
@@ -35,9 +38,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy package files for production dependencies
 COPY package.json pnpm-lock.yaml ./
+COPY patches/ ./patches/
 COPY apps/api/apps/auth-microservice/package.json ./apps/api/apps/auth-microservice/
 COPY packages/database/package.json ./packages/database/
 COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Install dependencies (including dev for type generation)
 RUN pnpm install --frozen-lockfile

@@ -152,6 +152,96 @@ export class UsersService {
     });
   }
 
+  async getUserFollowers(id: string, skip: number = 0, take: number = 10) {
+    const user = await this.prismaService.client.user.findUnique({
+      where: { id },
+      select: { id: true, deleted: true },
+    });
+
+    if (!user || user.deleted) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    const where = {
+      followingId: id,
+      status: "ACCEPTED" as const,
+    };
+
+    const [follows, total] = await Promise.all([
+      this.prismaService.client.users_Follows.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        include: {
+          follower: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              avatarUrl: true,
+              bio: true,
+              isPublic: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.client.users_Follows.count({ where }),
+    ]);
+
+    return {
+      data: follows.map((f) => f.follower),
+      total,
+      skip,
+      take,
+    };
+  }
+
+  async getUserFollowing(id: string, skip: number = 0, take: number = 10) {
+    const user = await this.prismaService.client.user.findUnique({
+      where: { id },
+      select: { id: true, deleted: true },
+    });
+
+    if (!user || user.deleted) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    const where = {
+      followerId: id,
+      status: "ACCEPTED" as const,
+    };
+
+    const [follows, total] = await Promise.all([
+      this.prismaService.client.users_Follows.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        include: {
+          following: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              avatarUrl: true,
+              bio: true,
+              isPublic: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.client.users_Follows.count({ where }),
+    ]);
+
+    return {
+      data: follows.map((f) => f.following),
+      total,
+      skip,
+      take,
+    };
+  }
+
   async remove(id: string, updatedBy?: string) {
     const user = await this.prismaService.client.user.findUnique({
       where: { id },
