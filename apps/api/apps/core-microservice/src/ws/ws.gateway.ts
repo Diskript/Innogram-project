@@ -52,7 +52,9 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket): void {
     const userId = (client as AuthenticatedSocket).data?.userId;
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     const sockets = this.userSockets.get(userId);
     if (sockets) {
@@ -81,9 +83,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         .except(`user:${excludeUserId}`)
         .emit(event, data);
     } else {
-      this.server
-        .to(`conversation:${conversationId}`)
-        .emit(event, data);
+      this.server.to(`conversation:${conversationId}`).emit(event, data);
     }
   }
 

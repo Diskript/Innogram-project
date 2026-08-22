@@ -15,7 +15,10 @@ export class NotificationConsumer implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     await this.amqpService.setupQueue(
-      "notification.direct", "notification.deliver", "#", "notification.dlx",
+      "notification.direct",
+      "notification.deliver",
+      "#",
+      "notification.dlx",
     );
     await this.amqpService.consume("notification.deliver", async (msg) => {
       await this.handleNotification(msg);
@@ -32,9 +35,10 @@ export class NotificationConsumer implements OnModuleInit {
     }
 
     const userId = payload.userId as string;
-    const retryCount = (
-      (msg.properties?.headers as Record<string, unknown>)?.["x-retry-count"] as number
-    ) ?? 0;
+    const retryCount =
+      ((msg.properties?.headers as Record<string, unknown>)?.[
+        "x-retry-count"
+      ] as number) ?? 0;
 
     try {
       this.wsGateway.sendToUser(userId, "notification.new", payload);
