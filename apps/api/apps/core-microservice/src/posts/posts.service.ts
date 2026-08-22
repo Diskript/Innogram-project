@@ -149,6 +149,14 @@ export class PostsService {
         take,
         orderBy: { createdAt: "desc" },
         include: {
+          creator: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
           postsAssets: {
             include: {
               asset: true,
