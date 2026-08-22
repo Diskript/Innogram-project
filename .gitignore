@@ -46,3 +46,7 @@ plans
 tsconfig.tsbuildinfo
 ASSET_MANAGEMENT_IMPLEMENTATION_PLAN.md
 session.json
+graphify-out
+DEBUG_SUMMARY.md
+.gitignore
+DOCKER_COMPOSE_VERIFICATION.md

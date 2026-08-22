@@ -20,5 +20,10 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@nestjs/core@11.1.17": "patches/@nestjs__core@11.1.17.patch"
+    }
   }
 }

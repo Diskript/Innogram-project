@@ -20,14 +20,14 @@ export class CreatePostDto {
     message: "Visibility must be PUBLIC, FOLLOWERS, or PRIVATE",
   })
   visibility?: Visibility = Visibility.PUBLIC;
-  @ApiProperty({
-    description: "The ID of the user creating the post",
+  @ApiPropertyOptional({
+    description: "The ID of the user creating the post (overridden by JWT)",
     example: "uuid-string",
   })
+  @IsOptional()
   @IsString({ message: "User ID must be a string" })
   @IsUUID(undefined, { message: "User ID must be a valid UUID" })
-  @IsNotEmpty({ message: "User ID is required" })
-  userId!: string;
+  userId?: string;
 
   @ApiProperty({
     description: "The content of the post",

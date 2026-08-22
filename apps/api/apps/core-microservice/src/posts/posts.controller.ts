@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from "@nestjs/common";
 import {
   ApiOperation,
@@ -17,8 +18,11 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { PostsService } from "./posts.service";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import {
   CreatePostDto,
+  CurrentUser,
+  JwtUser,
   QueryPostDto,
   SearchPostDto,
   UpdatePostDto,
@@ -30,10 +34,15 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "Create a new post" })
   @ApiResponse({ status: 201, description: "Post created successfully" })
   @ApiResponse({ status: 400, description: "Invalid input" })
-  async create(@Body() createPostDto: CreatePostDto) {
+  async create(
+    @Body() createPostDto: CreatePostDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    createPostDto.userId = user.userId;
     return this.postsService.create(createPostDto);
   }
 
@@ -58,8 +67,11 @@ export class PostsController {
     description: "Filter by user ID",
   })
   @ApiResponse({ status: 200, description: "Posts retrieved successfully" })
-  async findAll(@Query() query: QueryPostDto) {
-    return this.postsService.findAll(query);
+  async findAll(
+    @Query() query: QueryPostDto,
+    @CurrentUser() currentUser?: JwtUser,
+  ) {
+    return this.postsService.findAll(query, currentUser);
   }
 
   @Get("search")
@@ -97,6 +109,7 @@ export class PostsController {
   }
 
   @Patch(":id")
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "Update a post" })
   @ApiParam({ name: "id", type: String, description: "Post UUID" })
   @ApiResponse({ status: 200, description: "Post updated successfully" })
@@ -104,16 +117,21 @@ export class PostsController {
   async update(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() updatePostDto: UpdatePostDto,
+    @CurrentUser() user: JwtUser,
   ) {
-    return this.postsService.update(id, updatePostDto);
+    return this.postsService.update(id, updatePostDto, user.userId);
   }
 
   @Delete(":id")
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "Delete a post (soft delete by archiving)" })
   @ApiParam({ name: "id", type: String, description: "Post UUID" })
   @ApiResponse({ status: 204, description: "Post archived successfully" })
   @ApiResponse({ status: 404, description: "Post not found" })
-  async remove(@Param("id", ParseUUIDPipe) id: string) {
-    return this.postsService.remove(id);
+  async remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.postsService.remove(id, user.userId);
   }
 }

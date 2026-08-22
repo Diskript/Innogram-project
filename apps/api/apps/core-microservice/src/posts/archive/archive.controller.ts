@@ -13,10 +13,7 @@ export class ArchiveController {
   @ApiParam({ name: "id", type: String, description: "Post UUID" })
   @ApiResponse({ status: 200, description: "Post archived successfully" })
   @ApiResponse({ status: 404, description: "Post not found" })
-  async archive(
-    @CurrentUser() user: JwtUser,
-    @Param("id") id: string,
-  ) {
+  async archive(@CurrentUser() user: JwtUser, @Param("id") id: string) {
     return this.archiveService.archivePost(user, id);
   }
 
@@ -25,10 +22,7 @@ export class ArchiveController {
   @ApiParam({ name: "id", type: String, description: "Post UUID" })
   @ApiResponse({ status: 200, description: "Post unarchived successfully" })
   @ApiResponse({ status: 404, description: "Post not found" })
-  async unArchive(
-    @CurrentUser() user: JwtUser,
-    @Param("id") id: string,
-  ) {
+  async unArchive(@CurrentUser() user: JwtUser, @Param("id") id: string) {
     return this.archiveService.unArchive(user, id);
   }
 

@@ -1,7 +1,18 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Post,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { JwtAuthService } from "./jwt-auth.service";
+import { JwtAuthGuard } from "./jwt-auth.guard";
 import {
+  CurrentUser,
+  JwtUser,
+  Public,
   LoginDto,
   SignUpDto,
   RefreshTokenDto,
@@ -10,10 +21,12 @@ import {
 
 @ApiTags("JWT Auth")
 @Controller("jwt-auth")
+@UseGuards(JwtAuthGuard)
 export class JwtAuthController {
   constructor(private readonly jwtAuthService: JwtAuthService) {}
 
   @Post("register")
+  @Public()
   @ApiOperation({ summary: "Register a new user" })
   @ApiResponse({ status: 201, description: "User registered successfully" })
   @ApiResponse({ status: 409, description: "User already exists" })
@@ -22,6 +35,7 @@ export class JwtAuthController {
   }
 
   @Post("login")
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Authenticate user and return tokens" })
   @ApiResponse({ status: 200, description: "Login successful" })
@@ -31,6 +45,7 @@ export class JwtAuthController {
   }
 
   @Post("refresh")
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Refresh access token using refresh token" })
   @ApiResponse({ status: 200, description: "Tokens refreshed successfully" })
@@ -43,8 +58,8 @@ export class JwtAuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Revoke refresh token (logout)" })
   @ApiResponse({ status: 200, description: "Logged out successfully" })
-  async logout(@Body() body: { userId: string }) {
-    await this.jwtAuthService.revokeRefreshToken(body.userId);
+  async logout(@CurrentUser() user: JwtUser) {
+    await this.jwtAuthService.revokeRefreshToken(user.userId);
     return { message: "Logged out successfully" };
   }
 
@@ -54,12 +69,13 @@ export class JwtAuthController {
     summary: "Revoke all refresh tokens (logout from all devices)",
   })
   @ApiResponse({ status: 200, description: "Logged out from all devices" })
-  async logoutAll(@Body() body: { userId: string }) {
-    await this.jwtAuthService.revokeAllRefreshTokens(body.userId);
+  async logoutAll(@CurrentUser() user: JwtUser) {
+    await this.jwtAuthService.revokeAllRefreshTokens(user.userId);
     return { message: "Logged out from all devices successfully" };
   }
 
   @Post("validate")
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Validate access token" })
   @ApiResponse({ status: 200, description: "Token is valid" })

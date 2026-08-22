@@ -138,22 +138,22 @@ describe("JwtAuthController", () => {
 
   describe("logout", () => {
     it("should revoke refresh token for a user", async () => {
-      const body = { userId: "user-id" };
+      const mockUser = { userId: "user-id", email: "test@example.com" };
       mockJwtAuthService.revokeRefreshToken.mockResolvedValue(undefined);
 
-      const result = await controller.logout(body);
+      const result = await controller.logout(mockUser);
 
       expect(result).toEqual({ message: "Logged out successfully" });
       expect(mockJwtAuthService.revokeRefreshToken).toHaveBeenCalledWith(
-        body.userId,
+        mockUser.userId,
       );
     });
 
     it("should call service with correct userId", async () => {
-      const body = { userId: "test-user-123" };
+      const mockUser = { userId: "test-user-123", email: "test@example.com" };
       mockJwtAuthService.revokeRefreshToken.mockResolvedValue(undefined);
 
-      await controller.logout(body);
+      await controller.logout(mockUser);
 
       expect(mockJwtAuthService.revokeRefreshToken).toHaveBeenCalledWith(
         "test-user-123",
@@ -163,24 +163,24 @@ describe("JwtAuthController", () => {
 
   describe("logoutAll", () => {
     it("should revoke all refresh tokens for a user", async () => {
-      const body = { userId: "user-id" };
+      const mockUser = { userId: "user-id", email: "test@example.com" };
       mockJwtAuthService.revokeAllRefreshTokens.mockResolvedValue(undefined);
 
-      const result = await controller.logoutAll(body);
+      const result = await controller.logoutAll(mockUser);
 
       expect(result).toEqual({
         message: "Logged out from all devices successfully",
       });
       expect(mockJwtAuthService.revokeAllRefreshTokens).toHaveBeenCalledWith(
-        body.userId,
+        mockUser.userId,
       );
     });
 
     it("should call service with correct userId", async () => {
-      const body = { userId: "test-user-456" };
+      const mockUser = { userId: "test-user-456", email: "test@example.com" };
       mockJwtAuthService.revokeAllRefreshTokens.mockResolvedValue(undefined);
 
-      await controller.logoutAll(body);
+      await controller.logoutAll(mockUser);
 
       expect(mockJwtAuthService.revokeAllRefreshTokens).toHaveBeenCalledWith(
         "test-user-456",

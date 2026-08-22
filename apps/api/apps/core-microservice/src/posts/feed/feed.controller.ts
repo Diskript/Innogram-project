@@ -26,10 +26,7 @@ export class FeedController {
     example: 20,
   })
   @ApiResponse({ status: 200, description: "Feed retrieved successfully" })
-  async getFeed(
-    @CurrentUser() user: JwtUser,
-    @Query() query: QueryFeedDto,
-  ) {
+  async getFeed(@CurrentUser() user: JwtUser, @Query() query: QueryFeedDto) {
     return this.feedService.generateFeed(user, query);
   }
 }
