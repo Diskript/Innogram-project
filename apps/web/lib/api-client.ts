@@ -22,72 +22,114 @@ export class ApiClient {
   constructor(private baseUrl: string) {}
 
   async get<T>(path: string, params?: Record<string, string>): Promise<T> {
-    const url = new URL(path, this.baseUrl);
+    const url = this.filePath(path);
     if (params) {
+      const parsed = new URL(url);
       for (const [key, value] of Object.entries(params)) {
-        url.searchParams.set(key, value);
+        parsed.searchParams.set(key, value);
       }
+      return this.fetchJson<T>(parsed.toString(), "GET", {}, undefined);
     }
-    return this.request<T>("GET", url.toString());
+    return this.fetchJson<T>(url, "GET", {}, undefined);
   }
 
   async post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>("POST", `${this.baseUrl}${path}`, body);
+    const payload = body === undefined ? undefined : JSON.stringify(body);
+    return this.fetchJson<T>(this.filePath(path), "POST", {}, payload);
   }
 
   async patch<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>("PATCH", `${this.baseUrl}${path}`, body);
+    const payload = body === undefined ? undefined : JSON.stringify(body);
+    return this.fetchJson<T>(this.filePath(path), "PATCH", {}, payload);
   }
 
   async delete<T>(path: string): Promise<T> {
-    return this.request<T>("DELETE", `${this.baseUrl}${path}`);
+    return this.fetchJson<T>(this.filePath(path), "DELETE", {}, undefined);
   }
 
-  private async request<T>(
-    method: string,
-    url: string,
-    body?: unknown,
-  ): Promise<T> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+  async getBlob(path: string): Promise<Blob> {
+    return this.requestBlob(this.filePath(path));
+  }
+
+  async upload<T>(path: string, formData: FormData): Promise<T> {
+    const headers: Record<string, string> = {};
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
+    return this.fetchJson<T>(this.filePath(path), "POST", headers, formData);
+  }
 
-    const res = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+  private filePath(path: string): string {
+    return new URL(path, this.baseUrl).toString();
+  }
 
-    if (res.status === 401) {
+  private async fetchJson<T>(
+    path: string,
+    method: string,
+    headers: Record<string, string>,
+    body: BodyInit | undefined,
+  ): Promise<T> {
+    const headersWithAuth: Record<string, string> = { ...headers };
+    if (!headersWithAuth["Content-Type"] && !(body instanceof FormData)) {
+      headersWithAuth["Content-Type"] = "application/json";
+    }
+    if (accessToken && !headersWithAuth["Authorization"]) {
+      headersWithAuth["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    let sent = await this.send(method, path, headersWithAuth, body);
+
+    if (sent.status === 401) {
       const refreshed = await this.attemptRefresh();
       if (refreshed) {
-        headers["Authorization"] = `Bearer ${accessToken}`;
-        const retryRes = await fetch(url, {
-          method,
-          headers,
-          body: body ? JSON.stringify(body) : undefined,
-        });
-        if (!retryRes.ok) {
-          throw new ApiError(
-            retryRes.status,
-            await retryRes.json().catch(() => null),
-          );
+        headersWithAuth["Authorization"] = `Bearer ${accessToken}`;
+        sent = await this.send(method, path, headersWithAuth, body);
+        if (!sent.ok && sent.status !== 204) {
+          throw new ApiError(sent.status, await sent.json().catch(() => null));
         }
-        if (retryRes.status === 204) return undefined as T;
-        return retryRes.json();
+        if (sent.status === 204) return undefined as T;
+        return sent.json();
       }
       throw new ApiError(401, null);
     }
 
-    if (!res.ok) {
-      throw new ApiError(res.status, await res.json().catch(() => null));
+    if (!sent.ok && sent.status !== 204) {
+      throw new ApiError(sent.status, await sent.json().catch(() => null));
+    }
+    if (sent.status === 204) return undefined as T;
+    return sent.json();
+  }
+
+  private send(
+    method: string,
+    url: string,
+    headers: Record<string, string>,
+    body: BodyInit | undefined,
+  ): Promise<Response> {
+    return fetch(url, { method, headers, body });
+  }
+
+  private async requestBlob(url: string): Promise<Blob> {
+    const headers: Record<string, string> = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
     }
 
-    if (res.status === 204) return undefined as T;
-    return res.json();
+    let sent = await fetch(url, { headers });
+
+    if (sent.status === 401) {
+      const refreshed = await this.attemptRefresh();
+      if (refreshed) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+        sent = await fetch(url, { headers });
+        if (!sent.ok) throw new ApiError(sent.status, null);
+        return sent.blob();
+      }
+      throw new ApiError(401, null);
+    }
+
+    if (!sent.ok) throw new ApiError(sent.status, null);
+    return sent.blob();
   }
 
   private async attemptRefresh(): Promise<boolean> {
