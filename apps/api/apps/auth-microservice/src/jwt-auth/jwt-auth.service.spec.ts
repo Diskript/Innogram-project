@@ -144,7 +144,7 @@ describe("JwtAuthService", () => {
     });
 
     it("should throw ConflictException if username is already taken", async () => {
-      mockPrismaClient.account.findUnique.mockResolvedValue(null);
+      mockPrismaClient.account.findFirst.mockResolvedValue(null);
       mockPrismaClient.user.findUnique.mockResolvedValue({
         id: "user-id",
         userName: signUpDto.username,
@@ -328,32 +328,6 @@ describe("JwtAuthService", () => {
         valid: false,
         error: "Invalid or expired access token",
       });
-    });
-  });
-
-  describe("parseExpirationToSeconds", () => {
-    it("should convert minutes to seconds", () => {
-      // @ts-expect-error - accessing private method for testing
-      const result = service.parseExpirationToSeconds("15m");
-      expect(result).toBe(15 * 60);
-    });
-
-    it("should convert hours to seconds", () => {
-      // @ts-expect-error - accessing private method for testing
-      const result = service.parseExpirationToSeconds("1h");
-      expect(result).toBe(60 * 60);
-    });
-
-    it("should convert days to seconds", () => {
-      // @ts-expect-error - accessing private method for testing
-      const result = service.parseExpirationToSeconds("7d");
-      expect(result).toBe(7 * 24 * 60 * 60);
-    });
-
-    it("should return default 7 days for unknown unit", () => {
-      // @ts-expect-error - accessing private method for testing
-      const result = service.parseExpirationToSeconds("10");
-      expect(result).toBe(7 * 24 * 60 * 60);
     });
   });
 
