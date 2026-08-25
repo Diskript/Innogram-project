@@ -248,5 +248,33 @@ describe("WsGateway", () => {
         conversationId: "conv-1",
       });
     });
+
+    it("should forward notification.created to the recipient user room", () => {
+      const eventsService = module.get<EventsService>(EventsService);
+      const onSpy = jest.spyOn(eventsService, "on");
+      gateway.onModuleInit();
+
+      const notificationListener = onSpy.mock.calls.find(
+        (call) => call[0] === "notification.created",
+      )?.[1];
+      expect(notificationListener).toBeDefined();
+
+      notificationListener!({
+        notificationId: "n1",
+        userId: "user-2",
+        actorId: "user-1",
+        type: "LIKE",
+        entityId: "post-1",
+      });
+
+      expect(mockServer.to).toHaveBeenCalledWith("user:user-2");
+      expect(mockServer.emit).toHaveBeenCalledWith("notification.created", {
+        notificationId: "n1",
+        userId: "user-2",
+        actorId: "user-1",
+        type: "LIKE",
+        entityId: "post-1",
+      });
+    });
   });
 });
