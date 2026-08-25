@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { EventsService } from "../events/events.service";
-import { QueryNotificationDto } from "@repo/shared-types";
+import {
+  QueryNotificationDto,
+  UpdateNotificationPreferencesDto,
+} from "@repo/shared-types";
 
 @Injectable()
 export class NotificationsService {
@@ -16,6 +19,17 @@ export class NotificationsService {
     type: string,
     entityId?: string | null,
   ) {
+    const prefKey = this.prefKeyForType(type);
+    if (prefKey) {
+      const prefs =
+        await this.prismaService.client.notificationPreference.findUnique({
+          where: { userId },
+        });
+      if (prefs && !prefs[prefKey]) {
+        return null;
+      }
+    }
+
     const notification = await this.prismaService.client.notification.create({
       data: { userId, actorId, type, entityId },
     });
@@ -75,11 +89,85 @@ export class NotificationsService {
     return { success: true };
   }
 
+  async markAllAsRead(userId: string) {
+    const result = await this.prismaService.client.notification.updateMany({
+      where: { userId, read: false },
+      data: { read: true },
+    });
+
+    return { success: true, updated: result.count };
+  }
+
+  async getPreferences(userId: string) {
+    const prefs =
+      await this.prismaService.client.notificationPreference.findUnique({
+        where: { userId },
+      });
+
+    if (!prefs) {
+      return {
+        followEnabled: true,
+        likeEnabled: true,
+        commentEnabled: true,
+        mentionEnabled: true,
+      };
+    }
+
+    return {
+      followEnabled: prefs.followEnabled,
+      likeEnabled: prefs.likeEnabled,
+      commentEnabled: prefs.commentEnabled,
+      mentionEnabled: prefs.mentionEnabled,
+    };
+  }
+
+  async updatePreferences(
+    userId: string,
+    dto: UpdateNotificationPreferencesDto,
+  ) {
+    const prefs = await this.prismaService.client.notificationPreference.upsert(
+      {
+        where: { userId },
+        create: { userId, ...dto },
+        update: { ...dto },
+      },
+    );
+
+    return {
+      followEnabled: prefs.followEnabled,
+      likeEnabled: prefs.likeEnabled,
+      commentEnabled: prefs.commentEnabled,
+      mentionEnabled: prefs.mentionEnabled,
+    };
+  }
+
   async getUnreadCount(userId: string) {
     const count = await this.prismaService.client.notification.count({
       where: { userId, read: false },
     });
 
     return { count };
+  }
+
+  private prefKeyForType(
+    type: string,
+  ):
+    | "followEnabled"
+    | "likeEnabled"
+    | "commentEnabled"
+    | "mentionEnabled"
+    | null {
+    switch (type) {
+      case "FOLLOW":
+        return "followEnabled";
+      case "LIKE":
+        return "likeEnabled";
+      case "COMMENT":
+        return "commentEnabled";
+      case "MENTION":
+        return "mentionEnabled";
+      default:
+        return null;
+    }
   }
 }
