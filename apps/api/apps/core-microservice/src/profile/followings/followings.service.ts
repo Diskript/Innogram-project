@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
+import { NotificationsService } from "../../notifications/notifications.service";
 import { JwtUser, FollowStatus } from "@repo/shared-types";
 
 @Injectable()
 export class FollowingsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async getAcceptedFollowingIds(user: JwtUser): Promise<string[]> {
     const follows = await this.prismaService.client.users_Follows.findMany({
@@ -131,6 +135,11 @@ export class FollowingsService {
           status,
         },
       });
+
+      if (status === FollowStatus.ACCEPTED) {
+        await this.notificationsService.create(id, user.userId, "FOLLOW");
+      }
+
       return {
         action: status === FollowStatus.ACCEPTED ? "followed" : "requested",
       };
@@ -159,6 +168,12 @@ export class FollowingsService {
       where: { id: request.id },
       data: { status: "ACCEPTED" },
     });
+
+    await this.notificationsService.create(
+      requesterUserId,
+      currentUser.userId,
+      "FOLLOW",
+    );
 
     return { action: "accepted" };
   }
