@@ -194,6 +194,7 @@ export interface PublicProfile {
   bio: string | null;
   isPublic: boolean;
   birthday: string | null;
+  _count?: { createdPosts: number; followers: number; following: number };
 }
 
 export interface UpdateProfileDto {
