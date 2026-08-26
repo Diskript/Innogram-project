@@ -5,9 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, MessageCircle, Pencil, Trash2, Reply } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MentionText } from "@/components/social/mention-text";
+import { MentionInput } from "@/components/social/mention-input";
 import { timeAgo, cn } from "@/lib/utils";
 import {
   getComments,
@@ -24,6 +25,7 @@ export function CommentsSection({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
   const [draft, setDraft] = useState("");
+  const [topDraft, setTopDraft] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>(
@@ -49,6 +51,14 @@ export function CommentsSection({ postId }: { postId: string }) {
     onSuccess: async () => {
       setDraft("");
       setReplyTarget(null);
+      await invalidateComments();
+    },
+  });
+
+  const { mutate: addTop, isPending: addingTop } = useMutation({
+    mutationFn: () => createComment(postId, { content: topDraft.trim() }),
+    onSuccess: async () => {
+      setTopDraft("");
       await invalidateComments();
     },
   });
@@ -91,9 +101,9 @@ export function CommentsSection({ postId }: { postId: string }) {
             </p>
             {editingId === comment.id ? (
               <div className="mt-1 flex flex-col gap-2">
-                <Textarea
+                <MentionInput
                   value={editDraft}
-                  onChange={(e) => setEditDraft(e.target.value)}
+                  onChange={setEditDraft}
                   rows={2}
                 />
                 <div className="flex gap-2">
@@ -113,9 +123,9 @@ export function CommentsSection({ postId }: { postId: string }) {
                 </div>
               </div>
             ) : (
-              <p className="mt-0.5 text-sm text-neutral-700 dark:text-neutral-300">
-                {comment.content}
-              </p>
+              <div className="mt-0.5">
+                <MentionText content={comment.content} />
+              </div>
             )}
           </div>
           <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500">
@@ -169,9 +179,9 @@ export function CommentsSection({ postId }: { postId: string }) {
           </div>
           {replyTarget?.id === comment.id ? (
             <div className="mt-2 flex flex-col gap-2">
-              <Textarea
+              <MentionInput
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={setDraft}
                 rows={2}
                 placeholder={`Reply to @${comment.user.userName}`}
               />
@@ -207,6 +217,24 @@ export function CommentsSection({ postId }: { postId: string }) {
       <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-white">
         <MessageCircle className="h-4 w-4" /> Comments
       </h2>
+      <div className="flex flex-col gap-2">
+        <MentionInput
+          value={topDraft}
+          onChange={setTopDraft}
+          rows={2}
+          placeholder="Add a comment..."
+          maxLength={500}
+        />
+        <div className="flex justify-end">
+          <Button
+            isLoading={addingTop}
+            disabled={!topDraft.trim()}
+            onClick={() => addTop()}
+          >
+            Comment
+          </Button>
+        </div>
+      </div>
       {(data?.data.length ?? 0) === 0 ? (
         <EmptyState
           title="No comments yet"
