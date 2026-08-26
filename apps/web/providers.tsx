@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/auth-context";
+import { NotificationsProvider } from "@/contexts/notifications-context";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -19,7 +20,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <NotificationsProvider>{children}</NotificationsProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
