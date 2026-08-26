@@ -125,4 +125,46 @@ describe("FollowingsService", () => {
       expect(result).toEqual({ action: "accepted" });
     });
   });
+
+  describe("getFollowStatus", () => {
+    it("should return 'self' when the ids match", async () => {
+      const result = await service.getFollowStatus("user-1", "user-1");
+      expect(result).toBe("self");
+      expect(
+        mockPrismaService.client.users_Follows.findUnique,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("should return 'following' for accepted", async () => {
+      (
+        mockPrismaService.client.users_Follows.findUnique as jest.Mock
+      ).mockResolvedValue({
+        followerId: "user-1",
+        followingId: "user-2",
+        status: "ACCEPTED",
+      });
+      const result = await service.getFollowStatus("user-1", "user-2");
+      expect(result).toBe("following");
+    });
+
+    it("should return 'pending' for a pending request", async () => {
+      (
+        mockPrismaService.client.users_Follows.findUnique as jest.Mock
+      ).mockResolvedValue({
+        followerId: "user-1",
+        followingId: "user-2",
+        status: "PENDING",
+      });
+      const result = await service.getFollowStatus("user-1", "user-2");
+      expect(result).toBe("pending");
+    });
+
+    it("should return 'none' when no relationship exists", async () => {
+      (
+        mockPrismaService.client.users_Follows.findUnique as jest.Mock
+      ).mockResolvedValue(null);
+      const result = await service.getFollowStatus("user-1", "user-2");
+      expect(result).toBe("none");
+    });
+  });
 });

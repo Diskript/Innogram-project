@@ -51,6 +51,33 @@ export class FollowingsService {
     return follow?.status === "ACCEPTED";
   }
 
+  async getFollowStatus(
+    followerId: string,
+    followingId: string,
+  ): Promise<"none" | "pending" | "following" | "self"> {
+    if (followerId === followingId) {
+      return "self";
+    }
+
+    const follow = await this.prismaService.client.users_Follows.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId,
+          followingId,
+        },
+      },
+      select: { status: true },
+    });
+
+    if (follow?.status === "ACCEPTED") {
+      return "following";
+    }
+    if (follow?.status === "PENDING") {
+      return "pending";
+    }
+    return "none";
+  }
+
   async getFollows(user: JwtUser) {
     const follows = await this.prismaService.client.users_Follows.findMany({
       where: {
