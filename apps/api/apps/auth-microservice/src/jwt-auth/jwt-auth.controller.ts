@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   HttpCode,
   HttpStatus,
+  Req,
   UseGuards,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { JwtAuthService } from "./jwt-auth.service";
@@ -18,6 +21,7 @@ import {
   RefreshTokenDto,
   ValidateTokenDto,
 } from "@repo/shared-types";
+import { Request } from "express";
 
 @ApiTags("JWT Auth")
 @Controller("jwt-auth")
@@ -82,5 +86,24 @@ export class JwtAuthController {
   @ApiResponse({ status: 401, description: "Invalid or expired token" })
   async validate(@Body() validateTokenDto: ValidateTokenDto) {
     return this.jwtAuthService.validateAccessToken(validateTokenDto.token);
+  }
+
+  @Get("session")
+  @ApiOperation({ summary: "Get session tokens from httpOnly cookies" })
+  @ApiResponse({ status: 200, description: "Session found" })
+  @ApiResponse({ status: 401, description: "No or invalid session" })
+  async getSession(@Req() req: Request) {
+    const accessToken = req.cookies?.access_token;
+    const refreshToken = req.cookies?.refresh_token;
+    if (!accessToken) {
+      throw new UnauthorizedException("No session found");
+    }
+
+    const result = await this.jwtAuthService.validateAccessToken(accessToken);
+    if (!result.valid) {
+      throw new UnauthorizedException("Invalid session");
+    }
+
+    return { accessToken, refreshToken };
   }
 }
