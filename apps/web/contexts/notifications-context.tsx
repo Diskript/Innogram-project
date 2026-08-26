@@ -47,7 +47,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated) {
       socketRef.current?.disconnect();
       socketRef.current = null;
-      setUnreadCount(0);
       return;
     }
 
@@ -56,7 +55,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    void refreshUnread();
+    const timer = setTimeout(() => {
+      void refreshUnread();
+    }, 0);
 
     const socket = io(wsUrl(), {
       auth: { token },
@@ -73,6 +74,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
+      clearTimeout(timer);
       socket.disconnect();
       socketRef.current = null;
     };
