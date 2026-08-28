@@ -82,6 +82,7 @@ services:
       HASH_SALT: ${HASH_SALT}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3003}
       AUTH_SERVICE_URL: http://auth-microservice:3002
       CORE_SERVICE_URL: http://core-microservice:3001
       WEB_SERVICE_URL: http://web:3003
