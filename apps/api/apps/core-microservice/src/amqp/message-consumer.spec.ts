@@ -58,9 +58,9 @@ describe("MessageConsumer", () => {
     expect(consumer).toBeDefined();
   });
 
-  describe("onModuleInit", () => {
+  describe("onApplicationBootstrap", () => {
     it("should setup queue and register consumer", async () => {
-      await consumer.onModuleInit();
+      await consumer.onApplicationBootstrap();
 
       expect(mockAmqpService.setupQueue).toHaveBeenCalledWith(
         "chat.direct",

@@ -4,9 +4,13 @@ import { NotificationPublisher } from "./notification-publisher";
 import { NotificationConsumer } from "./notification-consumer";
 import { MessagePublisher } from "./message-publisher";
 import { UndeliveredHandler } from "./undelivered-handler";
+import { WsModule } from "../ws/ws.module";
+import { PrismaModule } from "../prisma/prisma.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Global()
 @Module({
+  imports: [WsModule, PrismaModule, NotificationsModule],
   providers: [
     AmqpService,
     NotificationPublisher,

@@ -103,6 +103,7 @@ services:
     environment:
       DATABASE_URL: postgresql://innogram_user:innogram_password@postgres:5432/innogram
       REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://innogram:innogram_password@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
@@ -146,25 +147,28 @@ services:
       - innogram-network
     restart: "no"
 
-  # Web - Next.js frontend
-  # Not implemented yet, will uncomment it later
-#  web:
-#   build:
-#      context: .
-#      dockerfile: apps/web/Dockerfile
-#    container_name: innogram-web
-#    environment:
-#      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
-#      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-http://localhost:3000}
-#    ports:
-#      - "3003:3003"
-#    depends_on:
-#      - core-microservice
-#      - auth-microservice
-#    networks:
-#      - innogram-network
-#    restart: unless-stopped
-#
+  # Web - Next.js frontend (client-side calls go through nginx on host :3000)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: innogram-web
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-http://localhost:3000}
+    ports:
+      - "3003:3003"
+    depends_on:
+      nginx:
+        condition: service_started
+      core-microservice:
+        condition: service_started
+      auth-microservice:
+        condition: service_started
+    networks:
+      - innogram-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
