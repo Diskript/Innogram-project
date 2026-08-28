@@ -64,6 +64,13 @@ export class FeedService {
               avatarUrl: true,
             },
           },
+          _count: {
+            select: { postLikes: true, comments: true },
+          },
+          postLikes: {
+            where: { userId: user.userId },
+            select: { id: true },
+          },
           postsAssets: {
             select: {
               orderIndex: true,

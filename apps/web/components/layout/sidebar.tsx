@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
-import { Home, User, Settings, LogOut } from "lucide-react";
+import { Home, User, Settings, LogOut, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 
 const navItems = [
   { href: "/", label: "Feed", icon: Home },
+  { href: "/search", label: "Search", icon: Search },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/profile/settings", label: "Settings", icon: Settings },
 ];
