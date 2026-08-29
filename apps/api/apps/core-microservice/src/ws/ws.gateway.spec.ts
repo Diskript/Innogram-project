@@ -9,6 +9,7 @@ import { UnauthorizedException } from "@nestjs/common";
 const mockPrismaClient = {
   conversation_Participant: {
     findUnique: jest.fn(),
+    findMany: jest.fn().mockResolvedValue([]),
   },
 };
 
@@ -26,10 +27,14 @@ describe("WsGateway", () => {
     disconnect: jest.fn(),
   };
 
+  const mockSocketsLeave = jest.fn();
+
   const mockServer = {
     to: jest.fn().mockReturnThis(),
     except: jest.fn().mockReturnThis(),
     emit: jest.fn(),
+    in: jest.fn().mockReturnThis(),
+    socketsLeave: mockSocketsLeave,
   };
 
   beforeEach(async () => {
@@ -246,6 +251,151 @@ describe("WsGateway", () => {
       expect(mockServer.emit).toHaveBeenCalledWith("typing:stop", {
         userId: "user-1",
         conversationId: "conv-1",
+      });
+    });
+  });
+
+  describe("real-time chat events", () => {
+    const getHandler = (eventName: string) => {
+      const eventsService = module.get<EventsService>(EventsService);
+      const onSpy = jest.spyOn(eventsService, "on");
+      gateway.onModuleInit();
+      return onSpy.mock.calls.find(([name]) => name === eventName)?.[1] as (
+        p: unknown,
+      ) => void;
+    };
+
+    it("forwards conversation.created to the participant user room", () => {
+      const handler = getHandler("conversation.created");
+
+      handler({ conversationId: "conv-1", userId: "user-2" });
+
+      expect(mockServer.to).toHaveBeenCalledWith("user:user-2");
+      expect(mockServer.emit).toHaveBeenCalledWith("conversation.created", {
+        conversationId: "conv-1",
+        userId: "user-2",
+      });
+    });
+
+    it("forwards participant.added to the conversation room", () => {
+      const handler = getHandler("participant.added");
+
+      handler({ conversationId: "conv-1", userId: "user-2" });
+
+      expect(mockServer.to).toHaveBeenCalledWith("conversation:conv-1");
+      expect(mockServer.emit).toHaveBeenCalledWith("participant.added", {
+        conversationId: "conv-1",
+        userId: "user-2",
+      });
+    });
+
+    it("broadcasts participant.left and removes the user's sockets from the room", () => {
+      const handler = getHandler("participant.left");
+
+      (
+        gateway as unknown as { userSockets: Map<string, Set<string>> }
+      ).userSockets.set("user-2", new Set(["socket-9"]));
+      const socket = { leave: jest.fn() };
+      (mockServer as unknown as { sockets: unknown }).sockets = {
+        sockets: { get: jest.fn().mockReturnValue(socket) },
+      };
+
+      handler({ conversationId: "conv-1", userId: "user-2" });
+
+      expect(mockServer.to).toHaveBeenCalledWith("conversation:conv-1");
+      expect(socket.leave).toHaveBeenCalledWith("conversation:conv-1");
+    });
+
+    it("broadcasts conversation.deleted then clears the room", () => {
+      const handler = getHandler("conversation.deleted");
+
+      handler({ conversationId: "conv-1" });
+
+      expect(mockServer.to).toHaveBeenCalledWith("conversation:conv-1");
+      expect(mockServer.emit).toHaveBeenCalledWith("conversation.deleted", {
+        conversationId: "conv-1",
+      });
+      expect(mockServer.in).toHaveBeenCalledWith("conversation:conv-1");
+      expect(mockSocketsLeave).toHaveBeenCalled();
+    });
+  });
+
+  describe("presence", () => {
+    const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+    const makeClient = (userId: string) => {
+      const socket = {
+        id: `socket-${userId}`,
+        handshake: { auth: { token: "valid" } },
+        data: {},
+        join: jest.fn(),
+        leave: jest.fn(),
+        disconnect: jest.fn(),
+      };
+      jest.spyOn(wsAuthService, "verify").mockReturnValue({ userId });
+      return socket;
+    };
+
+    it("emits presence:update to the user's conversation rooms on connect", async () => {
+      (
+        mockPrismaClient.conversation_Participant.findMany as jest.Mock
+      ).mockResolvedValue([{ conversationId: "conv-1" }]);
+
+      gateway.handleConnection(makeClient("user-1") as any);
+      await flush();
+
+      expect(
+        mockPrismaClient.conversation_Participant.findMany,
+      ).toHaveBeenCalledWith({
+        where: { userId: "user-1", leftAt: null },
+        select: { conversationId: true },
+      });
+      expect(mockServer.to).toHaveBeenCalledWith("conversation:conv-1");
+      expect(mockServer.emit).toHaveBeenCalledWith("presence:update", {
+        userId: "user-1",
+        online: true,
+      });
+    });
+
+    it("emits offline presence on final disconnect, excluding the user", async () => {
+      (
+        mockPrismaClient.conversation_Participant.findMany as jest.Mock
+      ).mockResolvedValue([{ conversationId: "conv-1" }]);
+
+      const client = makeClient("user-1");
+      gateway.handleConnection(client as any);
+      await flush();
+      gateway.handleDisconnect(client as any);
+      await flush();
+
+      expect(mockServer.except).toHaveBeenCalledWith("user:user-1");
+      expect(mockServer.emit).toHaveBeenCalledWith("presence:update", {
+        userId: "user-1",
+        online: false,
+      });
+    });
+
+    it("emits offline presence only when the last socket disconnects", async () => {
+      (
+        mockPrismaClient.conversation_Participant.findMany as jest.Mock
+      ).mockResolvedValue([{ conversationId: "conv-1" }]);
+
+      const first = makeClient("user-1");
+      const second = { ...makeClient("user-1"), id: "socket-user-1-b" };
+      gateway.handleConnection(first as any);
+      gateway.handleConnection(second as any);
+      await flush();
+      (mockServer.emit as jest.Mock).mockClear();
+
+      gateway.handleDisconnect(first as any);
+      await flush();
+      expect(mockServer.emit).not.toHaveBeenCalled();
+
+      gateway.handleDisconnect(second as any);
+      await flush();
+      expect(mockServer.emit).toHaveBeenCalledWith("presence:update", {
+        userId: "user-1",
+        online: false,
       });
     });
   });
