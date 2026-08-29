@@ -8,6 +8,7 @@ import { PostsModule } from "./posts/posts.module";
 import { AssetsModule } from "./assets/assets.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { MentionsModule } from "./mentions/mentions.module";
+import { ChatModule } from "./chat/chat.module";
 import { WsModule } from "./ws/ws.module";
 import { EventsModule } from "./events/events.module";
 import { AmqpModule } from "./amqp/amqp.module";
@@ -21,6 +22,7 @@ import { AmqpModule } from "./amqp/amqp.module";
     AssetsModule,
     NotificationsModule,
     MentionsModule,
+    ChatModule,
     WsModule,
     EventsModule,
     AmqpModule,
