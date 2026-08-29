@@ -11,6 +11,7 @@ import {
   QueryMessageDto,
   SendMessageDto,
   UpdateMessageDto,
+  AddParticipantsDto,
   ConversationWithParticipants,
   ParticipantWithUser,
   MessageWithSenderAndAssets,
@@ -108,9 +109,22 @@ export class ChatService {
       }),
     ]);
 
-    const data = participations.map((p) =>
-      this.toConversationResponse(p.conversation),
+    const unreadCounts = await Promise.all(
+      participations.map((p) =>
+        this.prismaService.client.message.count({
+          where: {
+            conversationId: p.conversation.id,
+            senderId: { not: userId },
+            ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+          },
+        }),
+      ),
     );
+
+    const data = participations.map((p, i) => ({
+      ...this.toConversationResponse(p.conversation),
+      unreadCount: unreadCounts[i],
+    }));
 
     return { data, total, skip, take };
   }
@@ -118,32 +132,7 @@ export class ChatService {
   async getConversation(conversationId: string, userId: string) {
     await this.assertParticipant(conversationId, userId);
 
-    const conversation =
-      await this.prismaService.client.conversation.findUnique({
-        where: { id: conversationId },
-        include: {
-          participants: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  userName: true,
-                  displayName: true,
-                  avatarUrl: true,
-                },
-              },
-            },
-          },
-          messages: {
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
-      });
-
-    if (!conversation) {
-      throw new NotFoundException("Conversation not found");
-    }
+    const conversation = await this.getConversationOrThrow(conversationId);
 
     return this.toConversationResponse(conversation);
   }
@@ -330,6 +319,112 @@ export class ChatService {
     return { success: true };
   }
 
+  async markConversationRead(
+    conversationId: string,
+    userId: string,
+  ): Promise<{ success: true }> {
+    await this.assertParticipant(conversationId, userId);
+
+    await this.prismaService.client.conversation_Participant.update({
+      where: { conversationId_userId: { conversationId, userId } },
+      data: { lastReadAt: new Date() },
+    });
+
+    return { success: true };
+  }
+
+  async addParticipants(
+    conversationId: string,
+    dto: AddParticipantsDto,
+    userId: string,
+  ) {
+    await this.assertAdmin(conversationId, userId);
+
+    for (const pid of dto.userIds) {
+      const existing =
+        await this.prismaService.client.conversation_Participant.findUnique({
+          where: {
+            conversationId_userId: { conversationId, userId: pid },
+          },
+        });
+
+      if (existing) {
+        if (!existing.leftAt) {
+          continue;
+        }
+        await this.prismaService.client.conversation_Participant.update({
+          where: { id: existing.id },
+          data: { leftAt: null, joinedAt: new Date() },
+        });
+      } else {
+        await this.prismaService.client.conversation_Participant.create({
+          data: { conversationId, userId: pid, role: "MEMBER" },
+        });
+      }
+
+      this.eventsService.emit("participant.added", {
+        conversationId,
+        userId: pid,
+      });
+    }
+
+    const conversation = await this.getConversationOrThrow(conversationId);
+    return this.toConversationResponse(conversation);
+  }
+
+  async removeParticipant(
+    conversationId: string,
+    targetUserId: string,
+    actingUserId: string,
+  ): Promise<{ success: true }> {
+    const participant =
+      await this.prismaService.client.conversation_Participant.findUnique({
+        where: {
+          conversationId_userId: {
+            conversationId,
+            userId: targetUserId,
+          },
+        },
+      });
+
+    if (!participant || participant.leftAt) {
+      throw new NotFoundException("Participant not found");
+    }
+
+    if (targetUserId !== actingUserId) {
+      await this.assertAdmin(conversationId, actingUserId);
+    } else {
+      await this.assertNotSoleAdmin(conversationId, actingUserId);
+    }
+
+    await this.prismaService.client.conversation_Participant.update({
+      where: { id: participant.id },
+      data: { leftAt: new Date() },
+    });
+
+    this.eventsService.emit("participant.left", {
+      conversationId,
+      userId: targetUserId,
+    });
+
+    return { success: true };
+  }
+
+  async deleteConversation(
+    conversationId: string,
+    userId: string,
+  ): Promise<{ success: true }> {
+    await this.assertAdmin(conversationId, userId);
+
+    await this.prismaService.client.conversation.delete({
+      where: { id: conversationId },
+    });
+
+    this.eventsService.emit("conversation.deleted", { conversationId });
+
+    return { success: true };
+  }
+
   private async assertParticipant(
     conversationId: string,
     userId: string,
@@ -346,6 +441,85 @@ export class ChatService {
         "You are not a participant in this conversation",
       );
     }
+  }
+
+  private async assertAdmin(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
+    const participant =
+      await this.prismaService.client.conversation_Participant.findUnique({
+        where: {
+          conversationId_userId: { conversationId, userId },
+        },
+      });
+
+    if (!participant || participant.leftAt || participant.role !== "ADMIN") {
+      throw new ForbiddenException("Only conversation admins can do this");
+    }
+  }
+
+  private async assertNotSoleAdmin(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
+    const participant =
+      await this.prismaService.client.conversation_Participant.findUnique({
+        where: {
+          conversationId_userId: { conversationId, userId },
+        },
+      });
+
+    if (!participant || participant.role !== "ADMIN") {
+      return;
+    }
+
+    const otherAdmins =
+      await this.prismaService.client.conversation_Participant.count({
+        where: {
+          conversationId,
+          role: "ADMIN",
+          leftAt: null,
+          NOT: { userId },
+        },
+      });
+
+    if (otherAdmins === 0) {
+      throw new ForbiddenException(
+        "You are the only admin. Delete the conversation instead of leaving it.",
+      );
+    }
+  }
+
+  private async getConversationOrThrow(conversationId: string) {
+    const conversation =
+      await this.prismaService.client.conversation.findUnique({
+        where: { id: conversationId },
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  userName: true,
+                  displayName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          messages: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+      });
+
+    if (!conversation) {
+      throw new NotFoundException("Conversation not found");
+    }
+
+    return conversation;
   }
 
   private toConversationResponse(conversation: ConversationWithParticipants) {
