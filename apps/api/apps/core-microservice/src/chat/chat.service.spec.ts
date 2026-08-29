@@ -162,11 +162,15 @@ describe("ChatService", () => {
       );
 
       expect(result.content).toBe("hello");
-      expect(mockEvents.emit).toHaveBeenCalledWith("message.sent", {
-        conversationId: "conv-1",
-        messageId: "msg-1",
-        senderId: "user-1",
-      });
+      expect(mockEvents.emit).toHaveBeenCalledWith(
+        "message.sent",
+        expect.objectContaining({
+          conversationId: "conv-1",
+          messageId: "msg-1",
+          senderId: "user-1",
+          message: expect.objectContaining({ content: "hello" }),
+        }),
+      );
     });
 
     it("should throw if not a participant", async () => {
@@ -210,10 +214,15 @@ describe("ChatService", () => {
       );
 
       expect(result.content).toBe("edited");
-      expect(mockEvents.emit).toHaveBeenCalledWith("message.updated", {
-        conversationId: "conv-1",
-        messageId: "msg-1",
-      });
+      expect(mockEvents.emit).toHaveBeenCalledWith(
+        "message.updated",
+        expect.objectContaining({
+          conversationId: "conv-1",
+          messageId: "msg-1",
+          content: "edited",
+          message: expect.objectContaining({ content: "edited" }),
+        }),
+      );
     });
 
     it("should throw when editing another user's message", async () => {

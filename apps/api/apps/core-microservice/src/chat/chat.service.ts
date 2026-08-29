@@ -186,6 +186,7 @@ export class ChatService {
       conversationId,
       messageId: message.id,
       senderId: userId,
+      message: this.toMessageResponse(message),
     });
 
     return this.toMessageResponse(message);
@@ -290,6 +291,9 @@ export class ChatService {
     this.eventsService.emit("message.updated", {
       conversationId: updated.conversationId,
       messageId: updated.id,
+      content: updated.content,
+      updatedAt: updated.updatedAt,
+      message: this.toMessageResponse(updated),
     });
 
     return this.toMessageResponse(updated);
