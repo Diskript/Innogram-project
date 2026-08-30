@@ -4,13 +4,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
-import { Home, User, Settings, LogOut, Search } from "lucide-react";
+import { useChat } from "@/contexts/chat-context";
+import {
+  Home,
+  User,
+  Settings,
+  LogOut,
+  Search,
+  MessageCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 
 const navItems = [
   { href: "/", label: "Feed", icon: Home },
   { href: "/search", label: "Search", icon: Search },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/profile/settings", label: "Settings", icon: Settings },
 ];
@@ -18,6 +27,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { totalUnread } = useChat();
 
   return (
     <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
@@ -47,6 +57,11 @@ export function Sidebar() {
             >
               <Icon className="h-5 w-5" />
               {item.label}
+              {item.href === "/chat" && totalUnread > 0 && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-neutral-900 px-1.5 text-[10px] font-bold text-white dark:bg-white dark:text-neutral-900">
+                  {totalUnread > 99 ? "99+" : totalUnread}
+                </span>
+              )}
             </Link>
           );
         })}

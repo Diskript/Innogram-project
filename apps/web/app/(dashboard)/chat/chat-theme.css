@@ -107,3 +107,7 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+.chat-root .font-display {
+  font-family: var(--font-sora), sans-serif;
+}
