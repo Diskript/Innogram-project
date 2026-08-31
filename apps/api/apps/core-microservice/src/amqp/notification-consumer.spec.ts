@@ -50,15 +50,19 @@ describe("NotificationConsumer", () => {
     expect(consumer).toBeDefined();
   });
 
-  describe("onModuleInit", () => {
+  describe("onApplicationBootstrap", () => {
     it("should setup queue and register consumer", async () => {
-      await consumer.onModuleInit();
+      await consumer.onApplicationBootstrap();
 
       expect(mockAmqpService.setupQueue).toHaveBeenCalledWith(
-        "notification.direct", "notification.deliver", "#", "notification.dlx",
+        "notification.direct",
+        "notification.deliver",
+        "#",
+        "notification.dlx",
       );
       expect(mockAmqpService.consume).toHaveBeenCalledWith(
-        "notification.deliver", expect.any(Function),
+        "notification.deliver",
+        expect.any(Function),
       );
     });
   });
@@ -75,7 +79,9 @@ describe("NotificationConsumer", () => {
       await consumer.handleNotification(msg);
 
       expect(mockWsGateway.sendToUser).toHaveBeenCalledWith(
-        "user-2", "notification.new", {
+        "user-2",
+        "notification.new",
+        {
           notificationId: "notif-1",
           userId: "user-2",
           type: "MENTION",

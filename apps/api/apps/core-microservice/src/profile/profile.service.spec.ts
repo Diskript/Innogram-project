@@ -31,6 +31,7 @@ describe("ProfileService", () => {
     isPublic: true,
     birthday: new Date("1990-01-01"),
     deleted: false,
+    _count: { createdPosts: 5, followers: 10, following: 3 },
   };
 
   const mockFindUnique = jest.fn();
@@ -75,7 +76,12 @@ describe("ProfileService", () => {
           id: true,
           userName: true,
           _count: expect.objectContaining({
-            select: { createdPosts: true, followers: true, following: true, comments: true },
+            select: {
+              createdPosts: true,
+              followers: true,
+              following: true,
+              comments: true,
+            },
           }),
         }),
       });
@@ -84,12 +90,16 @@ describe("ProfileService", () => {
 
     it("should throw NotFoundException when user not found", async () => {
       mockFindUnique.mockResolvedValue(null);
-      await expect(service.getProfile("bad-id")).rejects.toThrow(NotFoundException);
+      await expect(service.getProfile("bad-id")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("should throw NotFoundException when user is deleted", async () => {
       mockFindUnique.mockResolvedValue({ ...mockUser, deleted: true });
-      await expect(service.getProfile("deleted-id")).rejects.toThrow(NotFoundException);
+      await expect(service.getProfile("deleted-id")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -146,14 +156,31 @@ describe("ProfileService", () => {
           isPublic: true,
           birthday: true,
           deleted: true,
+          _count: {
+            select: { createdPosts: true, followers: true, following: true },
+          },
         },
       });
       expect(result).toEqual(mockPublicUser);
     });
 
+    it("should include follower/following/post counts", async () => {
+      mockFindUnique.mockResolvedValue(mockPublicUser);
+
+      const result = await service.getPublicProfile("testuser");
+
+      expect(result._count).toEqual({
+        createdPosts: 5,
+        followers: 10,
+        following: 3,
+      });
+    });
+
     it("should throw NotFoundException when username not found", async () => {
       mockFindUnique.mockResolvedValue(null);
-      await expect(service.getPublicProfile("baduser")).rejects.toThrow(NotFoundException);
+      await expect(service.getPublicProfile("baduser")).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

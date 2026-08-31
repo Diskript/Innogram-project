@@ -82,6 +82,13 @@ export class ProfileService {
         isPublic: true,
         birthday: true,
         deleted: true,
+        _count: {
+          select: {
+            createdPosts: true,
+            followers: true,
+            following: true,
+          },
+        },
       },
     });
 

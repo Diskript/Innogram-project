@@ -78,6 +78,8 @@ model User {
   following   Users_Follows[] @relation("Following")
   ownedAssets Asset[]         @relation("AssetOwner")
 
+  notificationPreference NotificationPreference?
+
   // Conversation relations
   conversationParticipants Conversation_Participant[]
   sentMessages             Message[]                  @relation("MessageSender")
@@ -366,4 +368,19 @@ model Users_Follows {
   @@index([followerId])
   @@index([followingId])
   @@map("users_follows")
+}
+
+model NotificationPreference {
+  id             String   @id @default(uuid(7))
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  followEnabled  Boolean  @default(true)
+  likeEnabled    Boolean  @default(true)
+  commentEnabled Boolean  @default(true)
+  mentionEnabled Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@map("notification_preferences")
 }

@@ -107,6 +107,10 @@ export class FollowingsController {
     @CurrentUser() user: JwtUser,
     @Param("id", ParseUUIDPipe) id: string,
   ) {
-    return this.followingsService.isFollowing(user.userId, id);
+    const status = await this.followingsService.getFollowStatus(
+      user.userId,
+      id,
+    );
+    return { status };
   }
 }

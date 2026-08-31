@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from "@nestjs/common";
@@ -15,7 +17,12 @@ import {
 } from "@nestjs/swagger";
 import { NotificationsService } from "./notifications.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { CurrentUser, JwtUser, QueryNotificationDto } from "@repo/shared-types";
+import {
+  CurrentUser,
+  JwtUser,
+  QueryNotificationDto,
+  UpdateNotificationPreferencesDto,
+} from "@repo/shared-types";
 
 @ApiTags("Notifications")
 @Controller("notifications")
@@ -41,6 +48,30 @@ export class NotificationsController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async markAsRead(@Param("id") id: string, @CurrentUser() user: JwtUser) {
     return this.notificationsService.markAsRead(id, user.userId);
+  }
+
+  @Get("preferences")
+  @ApiOperation({ summary: "Get notification preferences" })
+  @ApiResponse({ status: 200, description: "Preferences retrieved" })
+  async getPreferences(@CurrentUser() user: JwtUser) {
+    return this.notificationsService.getPreferences(user.userId);
+  }
+
+  @Patch("preferences")
+  @ApiOperation({ summary: "Update notification preferences" })
+  @ApiResponse({ status: 200, description: "Preferences updated" })
+  async updatePreferences(
+    @Body() dto: UpdateNotificationPreferencesDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.notificationsService.updatePreferences(user.userId, dto);
+  }
+
+  @Post("read-all")
+  @ApiOperation({ summary: "Mark all notifications as read" })
+  @ApiResponse({ status: 201, description: "All notifications marked as read" })
+  async markAllAsRead(@CurrentUser() user: JwtUser) {
+    return this.notificationsService.markAllAsRead(user.userId);
   }
 
   @Get("unread-count")

@@ -182,6 +182,11 @@ export class WsGateway
           });
       }
     });
+
+    this.eventsService.on("notification.created", (payload: unknown) => {
+      const { userId } = payload as { userId: string };
+      this.sendToUser(userId, "notification.created", payload);
+    });
   }
 
   sendToUser(userId: string, event: string, data: unknown): void {

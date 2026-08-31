@@ -4,13 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
-import { Home, User, Settings, LogOut, Search } from "lucide-react";
+import { useNotifications } from "@/contexts/notifications-context";
+import { Home, User, Settings, LogOut, Search, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 
 const navItems = [
   { href: "/", label: "Feed", icon: Home },
   { href: "/search", label: "Search", icon: Search },
+  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/profile/settings", label: "Settings", icon: Settings },
 ];
@@ -18,6 +20,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
 
   return (
     <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
@@ -47,6 +50,11 @@ export function Sidebar() {
             >
               <Icon className="h-5 w-5" />
               {item.label}
+              {item.href === "/notifications" && unreadCount > 0 ? (
+                <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
             </Link>
           );
         })}
