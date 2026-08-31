@@ -103,6 +103,7 @@ services:
     environment:
       DATABASE_URL: postgresql://innogram_user:innogram_password@postgres:5432/innogram
       REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://innogram:innogram_password@rabbitmq:5672
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
