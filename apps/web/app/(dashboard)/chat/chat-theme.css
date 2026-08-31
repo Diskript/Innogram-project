@@ -79,7 +79,7 @@
   border: 1px solid var(--chat-border);
 }
 
-.chat-root .msg-hover {
+.chat-root .msg-hoverable:hover {
   transform: translateY(-1px);
   border-color: var(--chat-border-hover);
   box-shadow:
@@ -110,4 +110,44 @@
 
 .chat-root .font-display {
   font-family: var(--font-sora), sans-serif;
+}
+
+.chat-root .hv-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: var(--chat-panel);
+  border: 1px solid var(--chat-border-hover);
+  border-radius: 10px;
+  padding: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 14px rgba(139, 124, 246, 0.12);
+}
+
+.chat-root .group:hover .hv-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.chat-root .hv-act {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--chat-violet-light);
+  cursor: pointer;
+}
+
+.chat-root .hv-act:hover {
+  background: var(--accent);
+}
+
+.chat-root .hv-act.danger {
+  color: #ff7a6e;
 }
