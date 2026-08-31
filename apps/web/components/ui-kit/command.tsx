@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/chat-ui/dialog";
+} from "@/components/ui-kit/dialog";
 
 function Command({
   className,

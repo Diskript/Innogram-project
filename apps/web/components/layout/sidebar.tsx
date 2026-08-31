@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { useChat } from "@/contexts/chat-context";
 import {
@@ -13,8 +13,8 @@ import {
   Search,
   MessageCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui-kit/button";
+import { Avatar, AvatarFallback } from "@/components/ui-kit/avatar";
 
 const navItems = [
   { href: "/", label: "Feed", icon: Home },
@@ -30,10 +30,10 @@ export function Sidebar() {
   const { totalUnread } = useChat();
 
   return (
-    <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
+    <aside className="flex w-64 flex-col border-r border-[var(--ts-border)] bg-[var(--ts-list)] p-4">
       <Link
         href="/"
-        className="mb-8 text-xl font-bold text-neutral-900 dark:text-white"
+        className="font-display mb-8 text-xl font-semibold text-foreground"
       >
         Innogram
       </Link>
@@ -51,14 +51,14 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white"
-                  : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+                  ? "airmail-active text-foreground"
+                  : "text-[var(--ts-text-secondary)] hover:bg-[var(--ts-bubble)] hover:text-foreground",
               )}
             >
               <Icon className="h-5 w-5" />
               {item.label}
               {item.href === "/chat" && totalUnread > 0 && (
-                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-neutral-900 px-1.5 text-[10px] font-bold text-white dark:bg-white dark:text-neutral-900">
+                <span className="glow-soft ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ts-amber-light)] via-[var(--ts-amber-mid)] to-[var(--ts-amber-deep)] px-1.5 text-[10px] font-bold text-[var(--ts-amber-ink)]">
                   {totalUnread > 99 ? "99+" : totalUnread}
                 </span>
               )}
@@ -66,16 +66,20 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="mt-auto border-t border-neutral-200 pt-4 dark:border-neutral-800">
+      <div className="mt-auto border-t border-[var(--ts-border)] pt-4">
         <div className="mb-3 flex items-center gap-3 px-3">
-          <Avatar size="sm" alt={user?.email || ""} />
-          <span className="truncate text-sm font-medium text-neutral-900 dark:text-white">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="text-xs">
+              {initials(user?.email)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="truncate text-sm font-medium text-foreground">
             {user?.email}
           </span>
         </div>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3"
+          className="w-full justify-start gap-3 text-[var(--ts-text-secondary)]"
           onClick={logout}
         >
           <LogOut className="h-5 w-5" />

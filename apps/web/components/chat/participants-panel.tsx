@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/chat-ui/dialog";
+} from "@/components/ui-kit/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/chat-ui/alert-dialog";
+} from "@/components/ui-kit/alert-dialog";
 import { ApiError, api } from "@/lib/api-client";
 import {
   addParticipants,
