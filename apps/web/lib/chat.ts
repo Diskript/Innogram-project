@@ -1,4 +1,5 @@
 import { api } from "@/lib/api-client";
+import type { UploadedAsset } from "@/lib/posts";
 
 export interface ChatParticipant {
   id: string;
@@ -152,4 +153,19 @@ export function markConversationRead(
   conversationId: string,
 ): Promise<{ success: true }> {
   return api.post(`/chat/conversations/${conversationId}/read`);
+}
+
+export interface ChatUploadedAsset extends UploadedAsset {
+  fileName: string;
+}
+
+export function uploadChatAttachments(
+  files: File[],
+): Promise<ChatUploadedAsset[]> {
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append("files", file);
+  }
+  formData.append("visibility", "PRIVATE");
+  return api.upload<ChatUploadedAsset[]>("/assets/upload/multiple", formData);
 }
