@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useChat } from "@/contexts/chat-context";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageComposer } from "@/components/chat/message-composer";
+import { ConversationHeader } from "@/components/chat/conversation-header";
 
 export default function ConversationThreadPage() {
   const params = useParams<{ conversationId: string }>();
@@ -39,7 +40,7 @@ export default function ConversationThreadPage() {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="border-b border-[var(--chat-border)] px-5 py-3" />
+      <ConversationHeader conversationId={conversationId} />
       <MessageList conversationId={conversationId} />
       <MessageComposer conversationId={conversationId} />
     </div>
