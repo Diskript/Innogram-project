@@ -12,7 +12,7 @@ import {
 } from "@/lib/posts";
 import { PostCard } from "@/components/posts/post-card";
 import { CommentsSection } from "@/components/posts/comments";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui-kit/skeleton";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function PostDetailPage() {
@@ -48,7 +48,7 @@ export default function PostDetailPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
       <Link
         href="/"
-        className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Back to feed
       </Link>

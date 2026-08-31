@@ -3,10 +3,17 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, X } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import { Card } from "@/components/ui-kit/card";
+import { Button } from "@/components/ui-kit/button";
+import { Textarea } from "@/components/ui-kit/textarea";
+import { Spinner } from "@/components/ui-kit/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui-kit/select";
 import { createPost, uploadAssets } from "@/lib/posts";
 
 interface PendingFile {
@@ -76,11 +83,10 @@ export function PostComposer({ queryKey }: { queryKey: string[] }) {
     <Card>
       <div className="flex flex-col gap-3">
         <Textarea
-          label="What's happening?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
-          placeholder="Share something with the community..."
+          placeholder="What's happening?"
           maxLength={1000}
         />
         {pending.length > 0 ? (
@@ -90,7 +96,7 @@ export function PostComposer({ queryKey }: { queryKey: string[] }) {
               return (
                 <div
                   key={p.localId}
-                  className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-900"
+                  className="relative aspect-square overflow-hidden rounded-lg bg-[var(--ts-bubble)]"
                 >
                   {isVideo ? (
                     <video
@@ -122,20 +128,22 @@ export function PostComposer({ queryKey }: { queryKey: string[] }) {
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
+              size="icon"
               onClick={() => fileInputRef.current?.click()}
               aria-label="Attach media"
             >
               <ImagePlus className="h-5 w-5" />
             </Button>
-            <Select
-              value={visibility}
-              onChange={setVisibility}
-              options={[
-                { value: "PUBLIC", label: "Public" },
-                { value: "FOLLOWERS", label: "Followers" },
-                { value: "PRIVATE", label: "Private" },
-              ]}
-            />
+            <Select value={visibility} onValueChange={setVisibility}>
+              <SelectTrigger className="w-32" size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PUBLIC">Public</SelectItem>
+                <SelectItem value="FOLLOWERS">Followers</SelectItem>
+                <SelectItem value="PRIVATE">Private</SelectItem>
+              </SelectContent>
+            </Select>
             <input
               ref={fileInputRef}
               type="file"
@@ -145,11 +153,8 @@ export function PostComposer({ queryKey }: { queryKey: string[] }) {
               onChange={onPickFiles}
             />
           </div>
-          <Button
-            isLoading={posting}
-            disabled={!canSubmit}
-            onClick={() => publish()}
-          >
+          <Button disabled={!canSubmit} onClick={() => publish()}>
+            {posting && <Spinner className="size-4" />}
             Post
           </Button>
         </div>

@@ -7,9 +7,14 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
-import { Spinner } from "@/components/ui/spinner";
+} from "@/components/ui-kit/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui-kit/avatar";
+import { Spinner } from "@/components/ui-kit/spinner";
+import { initials } from "@/lib/utils";
 import {
   ApiError,
   getPublicProfile,
@@ -60,7 +65,7 @@ export default function PublicProfilePage() {
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
+        <Spinner className="size-8" />
       </div>
     );
   }
@@ -83,26 +88,32 @@ export default function PublicProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
-            <Avatar
-              src={profile.avatarUrl}
-              alt={profile.displayName}
-              size="lg"
-            />
+            <Avatar className="h-16 w-16">
+              {profile.avatarUrl && (
+                <AvatarImage
+                  src={profile.avatarUrl}
+                  alt={profile.displayName}
+                />
+              )}
+              <AvatarFallback className="text-lg">
+                {initials(profile.displayName || profile.userName)}
+              </AvatarFallback>
+            </Avatar>
             <div>
-              <CardTitle>{profile.displayName || profile.userName}</CardTitle>
+              <CardTitle className="font-display">
+                {profile.displayName || profile.userName}
+              </CardTitle>
               <CardDescription>@{profile.userName}</CardDescription>
             </div>
           </div>
         </CardHeader>
         {profile.bio && (
-          <p className="text-sm text-neutral-600 dark:text-neutral-300">
+          <p className="text-sm text-[var(--ts-text-secondary)]">
             {profile.bio}
           </p>
         )}
         {!profile.isPublic && (
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Private account
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Private account</p>
         )}
       </Card>
     </div>

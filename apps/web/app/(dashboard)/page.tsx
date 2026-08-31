@@ -11,9 +11,16 @@ import {
   type SortMode,
   type FilterMode,
 } from "@/components/posts/feed-toolbar";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui-kit/button";
+import { Spinner } from "@/components/ui-kit/spinner";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui-kit/empty";
 
 export default function FeedPage() {
   const [sort, setSort] = useState<SortMode>("newest");
@@ -68,11 +75,18 @@ export default function FeedPage() {
       ) : null}
 
       {!feed.isLoading && visiblePosts.length === 0 ? (
-        <EmptyState
-          icon={ImageOff}
-          title="No posts yet"
-          description="Posts from people you follow and public accounts will appear here. Try creating one above."
-        />
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ImageOff />
+            </EmptyMedia>
+            <EmptyTitle>No posts yet</EmptyTitle>
+            <EmptyDescription>
+              Posts from people you follow and public accounts will appear here.
+              Try creating one above.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-4">
           {visiblePosts.map((post) => (
@@ -85,9 +99,10 @@ export default function FeedPage() {
         <div className="flex justify-center">
           <Button
             variant="secondary"
-            isLoading={feed.isFetchingNextPage}
+            disabled={feed.isFetchingNextPage}
             onClick={() => feed.fetchNextPage()}
           >
+            {feed.isFetchingNextPage && <Spinner className="size-4" />}
             Load more
           </Button>
         </div>
