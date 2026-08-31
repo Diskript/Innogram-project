@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
+import { ApiError } from "@/lib/api-client";
 import { getConversation } from "@/lib/chat";
 import { useAuth } from "@/contexts/auth-context";
 import { useChat } from "@/contexts/chat-context";
@@ -20,9 +22,18 @@ export function ConversationHeader({
   const { typingBy, isOnline, setActiveConversationId } = useChat();
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const { data: conversation } = useQuery({
+  const {
+    data: conversation,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["chat", "conversation", conversationId],
     queryFn: () => getConversation(conversationId),
+    retry: (failureCount, err) =>
+      !(
+        err instanceof ApiError &&
+        (err.status === 403 || err.status === 404)
+      ) && failureCount < 2,
   });
 
   const isMember =
@@ -36,6 +47,30 @@ export function ConversationHeader({
       router.replace("/chat");
     }
   }, [conversation, isMember, router, setActiveConversationId]);
+
+  if (isError) {
+    const notFound =
+      error instanceof ApiError &&
+      (error.status === 403 || error.status === 404);
+    return (
+      <div className="chat-aurora flex flex-1 flex-col items-center justify-center gap-3 text-center">
+        <h2 className="font-display text-base font-semibold">
+          {notFound ? "Conversation unavailable" : "Something went wrong"}
+        </h2>
+        <p className="max-w-xs text-sm text-[var(--chat-text-secondary)]">
+          {notFound
+            ? "You don't have access to this conversation, or it no longer exists."
+            : "The conversation could not be loaded."}
+        </p>
+        <Link
+          href="/chat"
+          className="rounded-lg border border-[var(--chat-border)] px-4 py-2 text-sm font-semibold hover:border-[var(--chat-border-hover)]"
+        >
+          Back to chats
+        </Link>
+      </div>
+    );
+  }
 
   if (!conversation) {
     return <div className="border-b border-[var(--chat-border)] px-5 py-3" />;

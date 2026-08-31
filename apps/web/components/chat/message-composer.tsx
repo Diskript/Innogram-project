@@ -215,6 +215,7 @@ export function MessageComposer({
             }
           }}
           rows={1}
+          maxLength={4000}
           placeholder="Message…"
           className="max-h-32 min-h-6 flex-1 resize-none bg-transparent text-[13px] outline-none placeholder:text-[var(--chat-text-tertiary)]"
         />
