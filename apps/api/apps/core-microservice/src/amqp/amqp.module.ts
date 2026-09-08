@@ -3,6 +3,7 @@ import { AmqpService } from "./amqp.service";
 import { NotificationPublisher } from "./notification-publisher";
 import { NotificationConsumer } from "./notification-consumer";
 import { MessagePublisher } from "./message-publisher";
+import { MessageConsumer } from "./message-consumer";
 import { UndeliveredHandler } from "./undelivered-handler";
 import { WsModule } from "../ws/ws.module";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -16,6 +17,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     NotificationPublisher,
     NotificationConsumer,
     MessagePublisher,
+    MessageConsumer,
     UndeliveredHandler,
   ],
   exports: [AmqpService],

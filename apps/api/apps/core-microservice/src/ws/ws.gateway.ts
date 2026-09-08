@@ -56,6 +56,8 @@ export class WsGateway
 
       client.join(`user:${userId}`);
 
+      this.emitPresence(userId, true);
+
       this.logger.log(`WS client ${client.id} authenticated as ${userId}`);
     } catch {
       client.disconnect();
@@ -73,6 +75,7 @@ export class WsGateway
       sockets.delete(client.id);
       if (sockets.size === 0) {
         this.userSockets.delete(userId);
+        this.emitPresence(userId, false);
       }
     }
 
@@ -183,10 +186,69 @@ export class WsGateway
       }
     });
 
+    this.eventsService.on("conversation.created", (payload: unknown) => {
+      const { userId } = payload as {
+        conversationId: string;
+        userId: string;
+      };
+      this.sendToUser(userId, "conversation.created", payload);
+    });
+
+    this.eventsService.on("participant.added", (payload: unknown) => {
+      const { conversationId } = payload as { conversationId: string };
+      this.sendToConversation(conversationId, "participant.added", payload);
+    });
+
+    this.eventsService.on("participant.left", (payload: unknown) => {
+      const { conversationId, userId } = payload as {
+        conversationId: string;
+        userId: string;
+      };
+      this.sendToConversation(conversationId, "participant.left", payload);
+
+      const sockets = this.userSockets.get(userId);
+      if (sockets) {
+        for (const socketId of sockets) {
+          this.server.sockets.sockets
+            .get(socketId)
+            ?.leave(`conversation:${conversationId}`);
+        }
+      }
+    });
+
+    this.eventsService.on("conversation.deleted", (payload: unknown) => {
+      const { conversationId } = payload as { conversationId: string };
+      this.sendToConversation(conversationId, "conversation.deleted", payload);
+      this.server
+        .in(`conversation:${conversationId}`)
+        .socketsLeave(`conversation:${conversationId}`);
+    });
+
     this.eventsService.on("notification.created", (payload: unknown) => {
       const { userId } = payload as { userId: string };
       this.sendToUser(userId, "notification.created", payload);
     });
+  }
+
+  private emitPresence(userId: string, online: boolean): void {
+    void this.prismaService.client.conversation_Participant
+      .findMany({
+        where: { userId, leftAt: null },
+        select: { conversationId: true },
+      })
+      .then((participations) => {
+        for (const p of participations) {
+          this.sendToConversation(
+            p.conversationId,
+            "presence:update",
+            { userId, online },
+            online ? undefined : userId,
+          );
+        }
+      })
+      .catch((err) =>
+        this.logger.warn(`presence emit failed: ${(err as Error).message}`),
+      );
   }
 
   sendToUser(userId: string, event: string, data: unknown): void {

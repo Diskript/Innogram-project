@@ -13,6 +13,10 @@ describe("ChatController", () => {
     getMessages: jest.fn(),
     updateMessage: jest.fn(),
     deleteMessage: jest.fn(),
+    addParticipants: jest.fn(),
+    removeParticipant: jest.fn(),
+    deleteConversation: jest.fn(),
+    markConversationRead: jest.fn(),
   };
 
   const mockUser = { userId: "user-1", email: "alice@test.com" };
@@ -22,9 +26,7 @@ describe("ChatController", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ChatController],
-      providers: [
-        { provide: ChatService, useValue: mockChatService },
-      ],
+      providers: [{ provide: ChatService, useValue: mockChatService }],
     }).compile();
 
     controller = module.get<ChatController>(ChatController);
@@ -143,6 +145,67 @@ describe("ChatController", () => {
       expect(result).toEqual({ success: true });
       expect(mockChatService.deleteMessage).toHaveBeenCalledWith(
         "msg-1",
+        "user-1",
+      );
+    });
+  });
+
+  describe("addParticipants", () => {
+    it("POST /chat/conversations/:id/participants calls service", async () => {
+      mockChatService.addParticipants.mockResolvedValue({ id: "conv-1" });
+      const dto = { userIds: ["user-2"] };
+
+      const result = await controller.addParticipants("conv-1", dto, mockUser);
+      expect(result).toEqual({ id: "conv-1" });
+      expect(mockChatService.addParticipants).toHaveBeenCalledWith(
+        "conv-1",
+        { userIds: ["user-2"] },
+        "user-1",
+      );
+    });
+  });
+
+  describe("removeParticipant", () => {
+    it("DELETE /chat/conversations/:id/participants/:userId calls service", async () => {
+      mockChatService.removeParticipant.mockResolvedValue({ success: true });
+
+      const result = await controller.removeParticipant(
+        "conv-1",
+        "user-2",
+        mockUser,
+      );
+      expect(result).toEqual({ success: true });
+      expect(mockChatService.removeParticipant).toHaveBeenCalledWith(
+        "conv-1",
+        "user-2",
+        "user-1",
+      );
+    });
+  });
+
+  describe("deleteConversation", () => {
+    it("DELETE /chat/conversations/:id calls service", async () => {
+      mockChatService.deleteConversation.mockResolvedValue({ success: true });
+
+      const result = await controller.deleteConversation("conv-1", mockUser);
+      expect(result).toEqual({ success: true });
+      expect(mockChatService.deleteConversation).toHaveBeenCalledWith(
+        "conv-1",
+        "user-1",
+      );
+    });
+  });
+
+  describe("markRead", () => {
+    it("POST /chat/conversations/:id/read calls service", async () => {
+      mockChatService.markConversationRead.mockResolvedValue({
+        success: true,
+      });
+
+      const result = await controller.markRead("conv-1", mockUser);
+      expect(result).toEqual({ success: true });
+      expect(mockChatService.markConversationRead).toHaveBeenCalledWith(
+        "conv-1",
         "user-1",
       );
     });

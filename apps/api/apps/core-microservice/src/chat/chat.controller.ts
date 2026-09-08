@@ -21,6 +21,7 @@ import {
   QueryMessageDto,
   SendMessageDto,
   UpdateMessageDto,
+  AddParticipantsDto,
   ConversationResponse,
   MessageResponse,
 } from "@repo/shared-types";
@@ -108,5 +109,56 @@ export class ChatController {
     @CurrentUser() user: JwtUser,
   ) {
     return this.chatService.deleteMessage(id, user.userId);
+  }
+
+  @Post("conversations/:id/participants")
+  @ApiOperation({ summary: "Add participants (admin only)" })
+  @ApiParam({ name: "id", type: String, description: "Conversation UUID" })
+  @ApiResponse({ status: 201, type: ConversationResponse })
+  addParticipants(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: AddParticipantsDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.chatService.addParticipants(id, dto, user.userId);
+  }
+
+  @Delete("conversations/:id/participants/:userId")
+  @ApiOperation({ summary: "Remove a participant (admin) or leave (self)" })
+  @ApiParam({ name: "id", type: String, description: "Conversation UUID" })
+  @ApiParam({
+    name: "userId",
+    type: String,
+    description: "Participant user UUID",
+  })
+  @ApiResponse({ status: 200 })
+  removeParticipant(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Param("userId", ParseUUIDPipe) userId: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.chatService.removeParticipant(id, userId, user.userId);
+  }
+
+  @Delete("conversations/:id")
+  @ApiOperation({ summary: "Delete the conversation (admin only)" })
+  @ApiParam({ name: "id", type: String, description: "Conversation UUID" })
+  @ApiResponse({ status: 200 })
+  deleteConversation(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.chatService.deleteConversation(id, user.userId);
+  }
+
+  @Post("conversations/:id/read")
+  @ApiOperation({ summary: "Mark the conversation as read" })
+  @ApiParam({ name: "id", type: String, description: "Conversation UUID" })
+  @ApiResponse({ status: 200 })
+  markRead(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.chatService.markConversationRead(id, user.userId);
   }
 }

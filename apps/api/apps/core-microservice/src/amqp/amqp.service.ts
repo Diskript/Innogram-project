@@ -14,8 +14,22 @@ export class AmqpService implements OnModuleDestroy {
   private readonly logger = new Logger(AmqpService.name);
   private connection: ChannelModel | null = null;
   private channel: Channel | null = null;
+  private connectPromise: Promise<void> | null = null;
 
   async connect(): Promise<void> {
+    if (this.channel) {
+      return;
+    }
+    if (!this.connectPromise) {
+      this.connectPromise = this.doConnect().catch((err) => {
+        this.connectPromise = null;
+        throw err;
+      });
+    }
+    await this.connectPromise;
+  }
+
+  private async doConnect(): Promise<void> {
     const url = getRabbitMqUrl();
     const conn = await amqplib.connect(url);
     this.connection = conn;
@@ -25,7 +39,13 @@ export class AmqpService implements OnModuleDestroy {
       this.logger.warn("RabbitMQ connection closed");
       this.connection = null;
       this.channel = null;
+      this.connectPromise = null;
     });
+  }
+
+  private async getReadyChannel(): Promise<Channel> {
+    await this.connect();
+    return this.channel!;
   }
 
   publish(
@@ -47,25 +67,21 @@ export class AmqpService implements OnModuleDestroy {
     bindingPattern: string,
     dlxName: string,
   ): Promise<void> {
-    if (!this.channel) {
-      throw new Error("RabbitMQ channel not initialized");
-    }
-    await this.channel.assertExchange(exchange, "direct", { durable: true });
-    await this.channel.assertQueue(queue, {
+    const channel = await this.getReadyChannel();
+    await channel.assertExchange(exchange, "direct", { durable: true });
+    await channel.assertQueue(queue, {
       durable: true,
       deadLetterExchange: dlxName,
     });
-    await this.channel.bindQueue(queue, exchange, bindingPattern);
+    await channel.bindQueue(queue, exchange, bindingPattern);
   }
 
   async consume(
     queue: string,
     handler: (msg: AmqpMessage) => Promise<void>,
   ): Promise<void> {
-    if (!this.channel) {
-      throw new Error("RabbitMQ channel not initialized");
-    }
-    await this.channel.consume(
+    const channel = await this.getReadyChannel();
+    await channel.consume(
       queue,
       async (msg) => {
         if (!msg) {

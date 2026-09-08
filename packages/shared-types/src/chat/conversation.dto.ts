@@ -60,4 +60,9 @@ export class ConversationResponse {
 
   @ApiPropertyOptional()
   lastMessage?: MessageBrief;
+
+  @ApiPropertyOptional({
+    description: "Messages newer than the caller's lastReadAt",
+  })
+  unreadCount?: number;
 }
