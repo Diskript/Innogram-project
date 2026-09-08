@@ -12,8 +12,8 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@/components/chat-ui",
-    "ui": "@/components/chat-ui",
+    "components": "@/components/ui-kit",
+    "ui": "@/components/ui-kit",
     "utils": "@/lib/utils",
     "lib": "@/lib",
     "hooks": "@/hooks"

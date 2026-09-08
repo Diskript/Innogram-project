@@ -4,10 +4,16 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search as SearchIcon, FileSearch } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui-kit/input";
+import { Button } from "@/components/ui-kit/button";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui-kit/empty";
 import { PostCard } from "@/components/posts/post-card";
 import { searchPosts, toPostCardModel } from "@/lib/posts";
 
@@ -44,19 +50,29 @@ function SearchPageInner() {
       </form>
 
       {!q ? (
-        <EmptyState
-          icon={FileSearch}
-          title="Search posts"
-          description="Search public posts by content or a tag."
-        />
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileSearch />
+            </EmptyMedia>
+            <EmptyTitle>Search posts</EmptyTitle>
+            <EmptyDescription>
+              Search public posts by content or a tag.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : isLoading ? (
         <Skeleton className="h-32 w-full" />
       ) : (data?.data.length ?? 0) === 0 ? (
-        <EmptyState
-          icon={FileSearch}
-          title="No results"
-          description={`Nothing found for "${q}".`}
-        />
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileSearch />
+            </EmptyMedia>
+            <EmptyTitle>No results</EmptyTitle>
+            <EmptyDescription>{`Nothing found for "${q}".`}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-4">
           {(data?.data ?? []).map((post) => (

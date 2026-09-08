@@ -2,9 +2,14 @@
 
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui-kit/textarea";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui-kit/avatar";
 import { searchUsers } from "@/lib/social";
+import { initials } from "@/lib/utils";
 
 interface MentionInputProps {
   value: string;
@@ -80,7 +85,12 @@ export function MentionInput({
               onClick={() => selectUser(user.userName)}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
             >
-              <Avatar size="sm" src={user.avatarUrl} alt={user.displayName} />
+              <Avatar size="sm">
+                {user.avatarUrl ? (
+                  <AvatarImage src={user.avatarUrl} alt={user.displayName} />
+                ) : null}
+                <AvatarFallback>{initials(user.displayName)}</AvatarFallback>
+              </Avatar>
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{user.displayName}</span>{" "}
                 <span className="text-neutral-500">@{user.userName}</span>

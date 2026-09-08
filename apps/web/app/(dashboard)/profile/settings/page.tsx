@@ -8,10 +8,12 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+} from "@/components/ui-kit/card";
+import { Button } from "@/components/ui-kit/button";
+import { Input } from "@/components/ui-kit/input";
+import { Label } from "@/components/ui-kit/label";
+import { Switch } from "@/components/ui-kit/switch";
+import { Spinner } from "@/components/ui-kit/spinner";
 import { profileSchema, type ProfileFormData } from "@/lib/validation";
 import { ApiError, getOwnProfile, updateProfile } from "@/lib/api-client";
 
@@ -96,12 +98,12 @@ export default function ProfileSettingsPage() {
     <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Profile settings</CardTitle>
+          <CardTitle className="font-display">Profile settings</CardTitle>
           <CardDescription>Update your profile information</CardDescription>
         </CardHeader>
 
         {loadError && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-[var(--ts-danger-text)]">
             {loadError}
           </div>
         )}
@@ -110,8 +112,8 @@ export default function ProfileSettingsPage() {
           <div
             className={
               saveStatus.type === "success"
-                ? "rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                : "rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                ? "rounded-lg border border-[var(--ts-green)]/30 bg-[var(--ts-green)]/10 p-3 text-sm text-[var(--ts-green)]"
+                : "rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-[var(--ts-danger-text)]"
             }
           >
             {saveStatus.message}
@@ -119,30 +121,54 @@ export default function ProfileSettingsPage() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <Input
-            label="Display name"
-            {...register("displayName")}
-            error={errors.displayName?.message}
-          />
-          <Input
-            label="Bio"
-            {...register("bio")}
-            error={errors.bio?.message}
-            placeholder="Tell people about yourself"
-          />
-          <Input
-            label="Avatar URL"
-            {...register("avatarUrl")}
-            error={errors.avatarUrl?.message}
-            placeholder="https://example.com/avatar.jpg"
-          />
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="displayName">Display name</Label>
+            <Input
+              id="displayName"
+              aria-invalid={!!errors.displayName}
+              {...register("displayName")}
+            />
+            {errors.displayName && (
+              <p className="text-xs text-[var(--ts-danger-text)]">
+                {errors.displayName.message}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Input
+              id="bio"
+              placeholder="Tell people about yourself"
+              aria-invalid={!!errors.bio}
+              {...register("bio")}
+            />
+            {errors.bio && (
+              <p className="text-xs text-[var(--ts-danger-text)]">
+                {errors.bio.message}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="avatarUrl">Avatar URL</Label>
+            <Input
+              id="avatarUrl"
+              placeholder="https://example.com/avatar.jpg"
+              aria-invalid={!!errors.avatarUrl}
+              {...register("avatarUrl")}
+            />
+            {errors.avatarUrl && (
+              <p className="text-xs text-[var(--ts-danger-text)]">
+                {errors.avatarUrl.message}
+              </p>
+            )}
+          </div>
 
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              <p className="text-sm font-medium text-foreground">
                 Private account
               </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm text-muted-foreground">
                 Only you can see your profile
               </p>
             </div>
@@ -153,7 +179,8 @@ export default function ProfileSettingsPage() {
             />
           </div>
 
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Spinner className="size-4" />}
             Save changes
           </Button>
         </form>
