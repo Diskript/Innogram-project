@@ -11,6 +11,9 @@ describe("NotificationsController", () => {
     findByUser: jest.fn(),
     markAsRead: jest.fn(),
     getUnreadCount: jest.fn(),
+    getPreferences: jest.fn(),
+    updatePreferences: jest.fn(),
+    markAllAsRead: jest.fn(),
   };
 
   const mockUser: JwtUser = { userId: "user-1", email: "test@test.com" };
@@ -54,6 +57,62 @@ describe("NotificationsController", () => {
     it("should call service.getUnreadCount with userId", async () => {
       await controller.getUnreadCount(mockUser);
       expect(service.getUnreadCount).toHaveBeenCalledWith("user-1");
+    });
+  });
+
+  describe("GET /notifications/preferences", () => {
+    it("should return preferences for the current user", async () => {
+      (service.getPreferences as jest.Mock).mockResolvedValue({
+        followEnabled: true,
+        likeEnabled: false,
+        commentEnabled: true,
+        mentionEnabled: true,
+      });
+
+      const result = await controller.getPreferences(mockUser);
+
+      expect(service.getPreferences).toHaveBeenCalledWith("user-1");
+      expect(result).toEqual({
+        followEnabled: true,
+        likeEnabled: false,
+        commentEnabled: true,
+        mentionEnabled: true,
+      });
+    });
+  });
+
+  describe("PATCH /notifications/preferences", () => {
+    it("should update preferences for the current user", async () => {
+      (service.updatePreferences as jest.Mock).mockResolvedValue({
+        followEnabled: false,
+        likeEnabled: true,
+        commentEnabled: true,
+        mentionEnabled: true,
+      });
+
+      const result = await controller.updatePreferences(
+        { followEnabled: false },
+        mockUser,
+      );
+
+      expect(service.updatePreferences).toHaveBeenCalledWith("user-1", {
+        followEnabled: false,
+      });
+      expect(result.followEnabled).toBe(false);
+    });
+  });
+
+  describe("POST /notifications/read-all", () => {
+    it("should mark all notifications read for the current user", async () => {
+      (service.markAllAsRead as jest.Mock).mockResolvedValue({
+        success: true,
+        updated: 2,
+      });
+
+      const result = await controller.markAllAsRead(mockUser);
+
+      expect(service.markAllAsRead).toHaveBeenCalledWith("user-1");
+      expect(result).toEqual({ success: true, updated: 2 });
     });
   });
 });

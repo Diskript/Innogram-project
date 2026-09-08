@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, X } from "lucide-react";
 import { Card } from "@/components/ui-kit/card";
 import { Button } from "@/components/ui-kit/button";
-import { Textarea } from "@/components/ui-kit/textarea";
 import { Spinner } from "@/components/ui-kit/spinner";
 import {
   Select,
@@ -14,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui-kit/select";
+import { MentionInput } from "@/components/social/mention-input";
 import { createPost, uploadAssets } from "@/lib/posts";
 
 interface PendingFile {
@@ -82,9 +82,9 @@ export function PostComposer({ queryKey }: { queryKey: string[] }) {
   return (
     <Card>
       <div className="flex flex-col gap-3">
-        <Textarea
+        <MentionInput
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
           rows={3}
           placeholder="What's happening?"
           maxLength={1000}

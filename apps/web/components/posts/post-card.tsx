@@ -47,6 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui-kit/alert-dialog";
+import { MentionText } from "@/components/social/mention-text";
 import { MediaGallery } from "@/components/posts/media-gallery";
 import { useAuth } from "@/contexts/auth-context";
 import { timeAgo, initials, cn } from "@/lib/utils";
@@ -235,9 +236,12 @@ export function PostCard({
             </div>
           </div>
         ) : (
-          <p className="mt-3 whitespace-pre-wrap break-words text-sm text-foreground/90">
-            {post.content}
-          </p>
+          <div className="mt-3">
+            <MentionText
+              content={post.content}
+              className="text-foreground/90"
+            />
+          </div>
         )}
 
         <MediaGallery assets={post.postsAssets} />

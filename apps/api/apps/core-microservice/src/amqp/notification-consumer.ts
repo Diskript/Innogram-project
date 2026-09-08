@@ -1,11 +1,11 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { AmqpService, AmqpMessage } from "./amqp.service";
 import { WsGateway } from "../ws/ws.gateway";
 
 const MAX_RETRIES = 3;
 
 @Injectable()
-export class NotificationConsumer implements OnModuleInit {
+export class NotificationConsumer implements OnApplicationBootstrap {
   private readonly logger = new Logger(NotificationConsumer.name);
 
   constructor(
@@ -13,7 +13,7 @@ export class NotificationConsumer implements OnModuleInit {
     private readonly wsGateway: WsGateway,
   ) {}
 
-  async onModuleInit(): Promise<void> {
+  async onApplicationBootstrap(): Promise<void> {
     await this.amqpService.setupQueue(
       "notification.direct",
       "notification.deliver",

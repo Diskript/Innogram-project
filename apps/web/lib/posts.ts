@@ -69,6 +69,13 @@ export interface PostDetail {
   postsAssets: FeedPostAsset[];
 }
 
+export interface UserPostsResponse {
+  data: PostDetail[];
+  total: number;
+  skip: number;
+  take: number;
+}
+
 export interface LikedUser {
   id: string;
   userName: string;
@@ -174,6 +181,19 @@ export function deletePost(id: string): Promise<void> {
 
 export function getPost(id: string): Promise<PostDetail> {
   return api.get<PostDetail>(`/posts/${id}`);
+}
+
+export function getUserPosts(
+  userId: string,
+  skip = 0,
+  take = 20,
+): Promise<UserPostsResponse> {
+  const params = {
+    userId,
+    skip: String(skip),
+    take: String(take),
+  };
+  return api.get<UserPostsResponse>("/posts", params);
 }
 
 export function searchPosts(

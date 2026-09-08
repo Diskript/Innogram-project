@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
+import { NotificationsService } from "../../notifications/notifications.service";
 import { JwtUser, FollowStatus } from "@repo/shared-types";
 
 @Injectable()
 export class FollowingsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async getAcceptedFollowingIds(user: JwtUser): Promise<string[]> {
     const follows = await this.prismaService.client.users_Follows.findMany({
@@ -45,6 +49,33 @@ export class FollowingsService {
       },
     });
     return follow?.status === "ACCEPTED";
+  }
+
+  async getFollowStatus(
+    followerId: string,
+    followingId: string,
+  ): Promise<"none" | "pending" | "following" | "self"> {
+    if (followerId === followingId) {
+      return "self";
+    }
+
+    const follow = await this.prismaService.client.users_Follows.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId,
+          followingId,
+        },
+      },
+      select: { status: true },
+    });
+
+    if (follow?.status === "ACCEPTED") {
+      return "following";
+    }
+    if (follow?.status === "PENDING") {
+      return "pending";
+    }
+    return "none";
   }
 
   async getFollows(user: JwtUser) {
@@ -131,6 +162,11 @@ export class FollowingsService {
           status,
         },
       });
+
+      if (status === FollowStatus.ACCEPTED) {
+        await this.notificationsService.create(id, user.userId, "FOLLOW");
+      }
+
       return {
         action: status === FollowStatus.ACCEPTED ? "followed" : "requested",
       };
@@ -159,6 +195,12 @@ export class FollowingsService {
       where: { id: request.id },
       data: { status: "ACCEPTED" },
     });
+
+    await this.notificationsService.create(
+      requesterUserId,
+      currentUser.userId,
+      "FOLLOW",
+    );
 
     return { action: "accepted" };
   }

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn, initials } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { useChat } from "@/contexts/chat-context";
+import { useNotifications } from "@/contexts/notifications-context";
 import {
   Home,
   User,
@@ -12,6 +13,7 @@ import {
   LogOut,
   Search,
   MessageCircle,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui-kit/button";
 import { Avatar, AvatarFallback } from "@/components/ui-kit/avatar";
@@ -20,6 +22,7 @@ const navItems = [
   { href: "/", label: "Feed", icon: Home },
   { href: "/search", label: "Search", icon: Search },
   { href: "/chat", label: "Chat", icon: MessageCircle },
+  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/profile/settings", label: "Settings", icon: Settings },
 ];
@@ -28,6 +31,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { totalUnread } = useChat();
+  const { unreadCount } = useNotifications();
 
   return (
     <aside className="flex w-64 flex-col border-r border-[var(--ts-border)] bg-[var(--ts-list)] p-4">
@@ -62,6 +66,11 @@ export function Sidebar() {
                   {totalUnread > 99 ? "99+" : totalUnread}
                 </span>
               )}
+              {item.href === "/notifications" && unreadCount > 0 ? (
+                <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
             </Link>
           );
         })}

@@ -223,6 +223,11 @@ export class WsGateway
         .in(`conversation:${conversationId}`)
         .socketsLeave(`conversation:${conversationId}`);
     });
+
+    this.eventsService.on("notification.created", (payload: unknown) => {
+      const { userId } = payload as { userId: string };
+      this.sendToUser(userId, "notification.created", payload);
+    });
   }
 
   private emitPresence(userId: string, online: boolean): void {

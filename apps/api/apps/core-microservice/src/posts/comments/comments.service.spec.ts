@@ -2,10 +2,8 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { CommentsService } from "./comments.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { MentionsService } from "../../mentions/mentions.service";
-import {
-  NotFoundException,
-  ForbiddenException,
-} from "@nestjs/common";
+import { NotificationsService } from "../../notifications/notifications.service";
+import { NotFoundException, ForbiddenException } from "@nestjs/common";
 
 describe("CommentsService", () => {
   let service: CommentsService;
@@ -30,6 +28,7 @@ describe("CommentsService", () => {
   const mockCommentLikeFindUnique = jest.fn();
   const mockCommentLikeCreate = jest.fn();
   const mockCommentLikeDelete = jest.fn();
+  const mockNotificationsCreate = jest.fn();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -62,6 +61,10 @@ describe("CommentsService", () => {
           provide: MentionsService,
           useValue: { notifyMentionedUsers: jest.fn() },
         },
+        {
+          provide: NotificationsService,
+          useValue: { create: mockNotificationsCreate },
+        },
       ],
     }).compile();
 
@@ -86,14 +89,19 @@ describe("CommentsService", () => {
         userId: "user-1",
         content: "Nice post!",
         parentCommentId: null,
-        user: { id: "user-1", userName: "u1", displayName: "U1", avatarUrl: null },
+        user: {
+          id: "user-1",
+          userName: "u1",
+          displayName: "U1",
+          avatarUrl: null,
+        },
       });
 
       const result = await service.create("post-1", "user-1", dto);
 
       expect(mockPostFindUnique).toHaveBeenCalledWith({
         where: { id: "post-1" },
-        select: { id: true },
+        select: { id: true, userId: true },
       });
       expect(mockCommentCreate).toHaveBeenCalledWith({
         data: {
@@ -116,7 +124,12 @@ describe("CommentsService", () => {
         id: "reply-1",
         parentCommentId: "parent-1",
         content: "Reply",
-        user: { id: "user-1", userName: "u1", displayName: "U1", avatarUrl: null },
+        user: {
+          id: "user-1",
+          userName: "u1",
+          displayName: "U1",
+          avatarUrl: null,
+        },
       });
 
       const result = await service.create("post-1", "user-1", {
@@ -139,9 +152,9 @@ describe("CommentsService", () => {
     it("should throw NotFoundException when post missing", async () => {
       mockPostFindUnique.mockResolvedValue(null);
 
-      await expect(
-        service.create("bad-id", "user-1", dto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.create("bad-id", "user-1", dto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("should throw NotFoundException when parent comment not found", async () => {
@@ -178,12 +191,22 @@ describe("CommentsService", () => {
         {
           id: "c1",
           content: "First",
-          user: { id: "u1", userName: "u1", displayName: "U1", avatarUrl: null },
+          user: {
+            id: "u1",
+            userName: "u1",
+            displayName: "U1",
+            avatarUrl: null,
+          },
           childComments: [
             {
               id: "r1",
               content: "Reply",
-              user: { id: "u2", userName: "u2", displayName: "U2", avatarUrl: null },
+              user: {
+                id: "u2",
+                userName: "u2",
+                displayName: "U2",
+                avatarUrl: null,
+              },
             },
           ],
           _count: { commentLikes: 3 },
@@ -200,10 +223,24 @@ describe("CommentsService", () => {
         skip: 0,
         take: 10,
         include: {
-          user: { select: { id: true, userName: true, displayName: true, avatarUrl: true } },
+          user: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
           childComments: {
             include: {
-              user: { select: { id: true, userName: true, displayName: true, avatarUrl: true } },
+              user: {
+                select: {
+                  id: true,
+                  userName: true,
+                  displayName: true,
+                  avatarUrl: true,
+                },
+              },
             },
             orderBy: { createdAt: "asc" },
           },
@@ -228,14 +265,23 @@ describe("CommentsService", () => {
       mockCommentUpdate.mockResolvedValue({
         ...existingComment,
         content: "Updated",
-        user: { id: "user-1", userName: "u1", displayName: "U1", avatarUrl: null },
+        user: {
+          id: "user-1",
+          userName: "u1",
+          displayName: "U1",
+          avatarUrl: null,
+        },
       });
 
       const result = await service.update("c1", "user-1", "Updated");
 
       expect(mockCommentUpdate).toHaveBeenCalledWith({
         where: { id: "c1" },
-        data: { content: "Updated", updatedAt: expect.any(Date), updatedBy: "user-1" },
+        data: {
+          content: "Updated",
+          updatedAt: expect.any(Date),
+          updatedBy: "user-1",
+        },
         include: expect.any(Object),
       });
       expect(result.content).toBe("Updated");
@@ -244,17 +290,17 @@ describe("CommentsService", () => {
     it("should throw NotFoundException when comment missing", async () => {
       mockCommentFindUnique.mockResolvedValue(null);
 
-      await expect(
-        service.update("bad-id", "user-1", "New"),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update("bad-id", "user-1", "New")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("should throw ForbiddenException when not the author", async () => {
       mockCommentFindUnique.mockResolvedValue(existingComment);
 
-      await expect(
-        service.update("c1", "other-user", "New"),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.update("c1", "other-user", "New")).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -279,17 +325,17 @@ describe("CommentsService", () => {
     it("should throw NotFoundException when comment missing", async () => {
       mockCommentFindUnique.mockResolvedValue(null);
 
-      await expect(
-        service.remove("bad-id", "user-1"),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove("bad-id", "user-1")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("should throw ForbiddenException when not the author", async () => {
       mockCommentFindUnique.mockResolvedValue(existingComment);
 
-      await expect(
-        service.remove("c1", "other-user"),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.remove("c1", "other-user")).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -320,6 +366,55 @@ describe("CommentsService", () => {
         where: { id: "like-1" },
       });
       expect(result).toEqual({ action: "unliked" });
+    });
+  });
+
+  describe("create notifications", () => {
+    const commentFixture = {
+      id: "comment-1",
+      postId: "post-1",
+      userId: "user-1",
+      content: "Nice post!",
+      parentCommentId: null,
+      user: {
+        id: "user-1",
+        userName: "u1",
+        displayName: "U1",
+        avatarUrl: null,
+      },
+    };
+
+    it("should notify the post author when commenting (not self)", async () => {
+      mockPostFindUnique.mockResolvedValue({
+        id: "post-1",
+        userId: "author-1",
+      });
+      mockCommentCreate.mockResolvedValue(commentFixture);
+
+      await service.create("post-1", "user-1", {
+        content: "Nice post!",
+      } as any);
+
+      expect(mockNotificationsCreate).toHaveBeenCalledWith(
+        "author-1",
+        "user-1",
+        "COMMENT",
+        "post-1",
+      );
+    });
+
+    it("should NOT notify when the author comments on their own post", async () => {
+      mockPostFindUnique.mockResolvedValue({
+        id: "post-1",
+        userId: "author-1",
+      });
+      mockCommentCreate.mockResolvedValue(commentFixture);
+
+      await service.create("post-1", "author-1", {
+        content: "Self note",
+      } as any);
+
+      expect(mockNotificationsCreate).not.toHaveBeenCalled();
     });
   });
 });

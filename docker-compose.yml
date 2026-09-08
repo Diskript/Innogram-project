@@ -82,6 +82,7 @@ services:
       HASH_SALT: ${HASH_SALT}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3003}
       AUTH_SERVICE_URL: http://auth-microservice:3002
       CORE_SERVICE_URL: http://core-microservice:3001
       WEB_SERVICE_URL: http://web:3003
@@ -147,25 +148,28 @@ services:
       - innogram-network
     restart: "no"
 
-  # Web - Next.js frontend
-  # Not implemented yet, will uncomment it later
-#  web:
-#   build:
-#      context: .
-#      dockerfile: apps/web/Dockerfile
-#    container_name: innogram-web
-#    environment:
-#      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
-#      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-http://localhost:3000}
-#    ports:
-#      - "3003:3003"
-#    depends_on:
-#      - core-microservice
-#      - auth-microservice
-#    networks:
-#      - innogram-network
-#    restart: unless-stopped
-#
+  # Web - Next.js frontend (client-side calls go through nginx on host :3000)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: innogram-web
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:-http://localhost:3000}
+    ports:
+      - "3003:3003"
+    depends_on:
+      nginx:
+        condition: service_started
+      core-microservice:
+        condition: service_started
+      auth-microservice:
+        condition: service_started
+    networks:
+      - innogram-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
