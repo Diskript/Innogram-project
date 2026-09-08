@@ -6,18 +6,20 @@ import {
 import { PrismaService } from "../../prisma/prisma.service";
 import { CreateCommentDto, QueryCommentDto } from "@repo/shared-types";
 import { MentionsService } from "../../mentions/mentions.service";
+import { NotificationsService } from "../../notifications/notifications.service";
 
 @Injectable()
 export class CommentsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly mentionsService: MentionsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(postId: string, userId: string, dto: CreateCommentDto) {
     const post = await this.prismaService.client.post.findUnique({
       where: { id: postId },
-      select: { id: true },
+      select: { id: true, userId: true },
     });
 
     if (!post) {
@@ -61,6 +63,15 @@ export class CommentsService {
       comment.id,
       dto.content,
     );
+
+    if (post.userId !== userId) {
+      await this.notificationsService.create(
+        post.userId,
+        userId,
+        "COMMENT",
+        postId,
+      );
+    }
 
     return comment;
   }

@@ -15,6 +15,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { MentionText } from "@/components/social/mention-text";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -194,9 +195,9 @@ export function PostCard({
             </div>
           </div>
         ) : (
-          <p className="mt-3 whitespace-pre-wrap break-words text-sm text-neutral-800 dark:text-neutral-200">
-            {post.content}
-          </p>
+          <div className="mt-3">
+            <MentionText content={post.content} />
+          </div>
         )}
 
         <MediaGallery assets={post.postsAssets} />

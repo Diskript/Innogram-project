@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { AmqpService, AmqpMessage } from "./amqp.service";
 import { WsGateway } from "../ws/ws.gateway";
 import { EventsService } from "../events/events.service";
@@ -6,7 +6,7 @@ import { EventsService } from "../events/events.service";
 const MAX_RETRIES = 3;
 
 @Injectable()
-export class MessageConsumer implements OnModuleInit {
+export class MessageConsumer implements OnApplicationBootstrap {
   private readonly logger = new Logger(MessageConsumer.name);
 
   constructor(
@@ -15,7 +15,7 @@ export class MessageConsumer implements OnModuleInit {
     private readonly eventsService: EventsService,
   ) {}
 
-  async onModuleInit(): Promise<void> {
+  async onApplicationBootstrap(): Promise<void> {
     await this.amqpService.setupQueue(
       "chat.direct",
       "chat.message.deliver",

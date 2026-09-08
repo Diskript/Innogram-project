@@ -16,6 +16,7 @@ describe("FollowingsController", () => {
     getPendingRequests: jest.fn(),
     getSentRequests: jest.fn(),
     isFollowing: jest.fn(),
+    getFollowStatus: jest.fn(),
   };
 
   const mockJwtAuthGuard = {
@@ -104,13 +105,17 @@ describe("FollowingsController", () => {
   });
 
   describe("GET /followings/check/:id", () => {
-    it("should call service.isFollowing with user id and target id", async () => {
+    it("should call service.getFollowStatus with user id and target id", async () => {
       const targetId = "target-uuid";
-      await controller.isFollowing(mockUser, targetId);
-      expect(service.isFollowing).toHaveBeenCalledWith(
+      (service.getFollowStatus as jest.Mock).mockResolvedValue("pending");
+
+      const result = await controller.isFollowing(mockUser, targetId);
+
+      expect(service.getFollowStatus).toHaveBeenCalledWith(
         mockUser.userId,
         targetId,
       );
+      expect(result).toEqual({ status: "pending" });
     });
   });
 });
