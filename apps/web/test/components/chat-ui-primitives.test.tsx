@@ -6,41 +6,41 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/chat-ui/alert-dialog";
-import { Badge } from "@/components/chat-ui/badge";
-import { Button } from "@/components/chat-ui/button";
+} from "@/components/ui-kit/alert-dialog";
+import { Badge } from "@/components/ui-kit/badge";
+import { Button } from "@/components/ui-kit/button";
 import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandList,
-} from "@/components/chat-ui/command";
+} from "@/components/ui-kit/command";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
   DialogTrigger,
-} from "@/components/chat-ui/dialog";
+} from "@/components/ui-kit/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/chat-ui/dropdown-menu";
+} from "@/components/ui-kit/dropdown-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/chat-ui/popover";
-import { ScrollArea } from "@/components/chat-ui/scroll-area";
-import { Separator } from "@/components/chat-ui/separator";
+} from "@/components/ui-kit/popover";
+import { ScrollArea } from "@/components/ui-kit/scroll-area";
+import { Separator } from "@/components/ui-kit/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/chat-ui/tooltip";
+} from "@/components/ui-kit/tooltip";
 
 describe("chat-ui primitives", () => {
   it("Button renders with children", () => {
