@@ -15,6 +15,14 @@ const config = {
     "/app/", // pages/routes excluded from the gate; components + lib are in scope
     "jest.setup.ts",
   ],
+  coverageThreshold: {
+    global: {
+      statements: 73,
+      branches: 64,
+      functions: 62,
+      lines: 74,
+    },
+  },
 };
 
 export default createJestConfig(config);
