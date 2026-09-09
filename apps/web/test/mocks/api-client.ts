@@ -8,7 +8,7 @@ export const mockApi = {
   requestBlob: jest.fn(),
 };
 
-class MockApiError extends Error {
+export class MockApiError extends Error {
   status: number;
 
   constructor(message: string, status: number) {
@@ -17,6 +17,8 @@ class MockApiError extends Error {
     this.status = status;
   }
 }
+
+export const ApiError = MockApiError;
 
 jest.mock("@/lib/api-client", () => ({
   api: mockApi,

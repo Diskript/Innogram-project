@@ -10,6 +10,8 @@ class ResizeObserverPolyfill {
 global.ResizeObserver =
   ResizeObserverPolyfill as unknown as typeof ResizeObserver;
 
+Element.prototype.scrollTo = (() => {}) as typeof Element.prototype.scrollTo;
+
 jest.mock("next/image", () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
