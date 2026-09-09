@@ -9,7 +9,6 @@ import {
   AvatarImage,
 } from "@/components/ui-kit/avatar";
 import { Button } from "@/components/ui-kit/button";
-import { Textarea } from "@/components/ui-kit/textarea";
 import { Spinner } from "@/components/ui-kit/spinner";
 import { Skeleton } from "@/components/ui-kit/skeleton";
 import {
