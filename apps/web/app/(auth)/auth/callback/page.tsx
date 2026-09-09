@@ -7,13 +7,13 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+} from "@/components/ui-kit/card";
+import { Spinner } from "@/components/ui-kit/spinner";
 import { setAccessToken } from "@/lib/api-client";
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<Spinner size="lg" />}>
+    <Suspense fallback={<Spinner className="size-8" />}>
       <AuthCallbackInner />
     </Suspense>
   );
@@ -63,7 +63,7 @@ function AuthCallbackInner() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="font-display">
           {status === "loading" && "Completing authentication..."}
           {status === "success" && "Signed in successfully!"}
           {status === "error" && "Authentication failed"}
@@ -75,7 +75,7 @@ function AuthCallbackInner() {
         </CardDescription>
       </CardHeader>
       <div className="flex justify-center py-4">
-        {status === "loading" && <Spinner size="lg" />}
+        {status === "loading" && <Spinner className="size-8" />}
       </div>
     </Card>
   );

@@ -10,7 +10,7 @@ export function DashboardLayout({
   showHeader?: boolean;
 }) {
   return (
-    <div className="flex min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="flex min-h-screen bg-background text-foreground">
       <Sidebar />
       <div className="flex flex-1 flex-col">
         {showHeader && <Header />}

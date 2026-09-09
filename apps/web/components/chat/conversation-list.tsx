@@ -9,7 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/chat-ui/dropdown-menu";
+} from "@/components/ui-kit/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/chat-ui/alert-dialog";
+} from "@/components/ui-kit/alert-dialog";
 import {
   deleteConversation,
   getConversations,

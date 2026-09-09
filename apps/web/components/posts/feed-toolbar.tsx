@@ -1,6 +1,12 @@
 "use client";
 
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui-kit/select";
 
 export type SortMode = "newest" | "oldest" | "likes";
 export type FilterMode = "all" | "media";
@@ -18,23 +24,25 @@ export function FeedToolbar({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <Select
-        value={sort}
-        onChange={(v) => setSort(v as SortMode)}
-        options={[
-          { value: "newest", label: "Newest" },
-          { value: "oldest", label: "Oldest" },
-          { value: "likes", label: "Most liked" },
-        ]}
-      />
-      <Select
-        value={filter}
-        onChange={(v) => setFilter(v as FilterMode)}
-        options={[
-          { value: "all", label: "All posts" },
-          { value: "media", label: "With media" },
-        ]}
-      />
+      <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
+        <SelectTrigger className="w-36" size="sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="newest">Newest</SelectItem>
+          <SelectItem value="oldest">Oldest</SelectItem>
+          <SelectItem value="likes">Most liked</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={filter} onValueChange={(v) => setFilter(v as FilterMode)}>
+        <SelectTrigger className="w-36" size="sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All posts</SelectItem>
+          <SelectItem value="media">With media</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

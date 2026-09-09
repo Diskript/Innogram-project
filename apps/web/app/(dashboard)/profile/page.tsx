@@ -6,12 +6,23 @@ import { Settings, Users } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { getOwnProfile } from "@/lib/api-client";
 import { getUserPosts, toPostCardModel } from "@/lib/posts";
+import { initials } from "@/lib/utils";
 import { PostCard } from "@/components/posts/post-card";
-import { Avatar } from "@/components/ui/avatar";
-import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui-kit/avatar";
+import { Card, CardTitle, CardDescription } from "@/components/ui-kit/card";
+import { Button } from "@/components/ui-kit/button";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui-kit/empty";
 
 function StatLink({
   label,
@@ -66,14 +77,18 @@ export default function OwnProfilePage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <Card noPadding>
+      <Card className="gap-0 py-0">
         <div className="flex flex-col gap-4 p-6">
           <div className="flex items-center gap-4">
-            <Avatar
-              size="lg"
-              src={profile.avatarUrl}
-              alt={profile.displayName}
-            />
+            <Avatar size="lg">
+              {profile.avatarUrl ? (
+                <AvatarImage
+                  src={profile.avatarUrl}
+                  alt={profile.displayName}
+                />
+              ) : null}
+              <AvatarFallback>{initials(profile.displayName)}</AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
               <CardTitle>{profile.displayName || profile.userName}</CardTitle>
               <CardDescription>@{profile.userName}</CardDescription>
@@ -111,11 +126,17 @@ export default function OwnProfilePage() {
 
       <div className="flex flex-col gap-4">
         {postModels.length === 0 && !posts.isLoading ? (
-          <EmptyState
-            icon={Users}
-            title="No posts yet"
-            description="Share your first post from the feed."
-          />
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Users />
+              </EmptyMedia>
+              <EmptyTitle>No posts yet</EmptyTitle>
+              <EmptyDescription>
+                Share your first post from the feed.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           postModels.map((post) => (
             <PostCard key={post.id} post={post} queryKey={["profilePosts"]} />
@@ -125,7 +146,7 @@ export default function OwnProfilePage() {
           <div className="flex justify-center">
             <Button
               variant="secondary"
-              isLoading={posts.isFetchingNextPage}
+              disabled={posts.isFetchingNextPage}
               onClick={() => posts.fetchNextPage()}
             >
               Load more

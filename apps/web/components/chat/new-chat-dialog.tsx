@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/chat-ui/dialog";
+} from "@/components/ui-kit/dialog";
 import {
   Command,
   CommandEmpty,
@@ -17,7 +17,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/chat-ui/command";
+} from "@/components/ui-kit/command";
 import { api } from "@/lib/api-client";
 import { createConversation, type ChatUser } from "@/lib/chat";
 

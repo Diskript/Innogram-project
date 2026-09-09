@@ -9,8 +9,13 @@ import {
   rejectFollowRequest,
 } from "@/lib/social";
 import { UserRow } from "@/components/social/user-row";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui-kit/empty";
 
 export default function FollowRequestsPage() {
   const queryClient = useQueryClient();
@@ -49,10 +54,14 @@ export default function FollowRequestsPage() {
         {incoming.isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : (incoming.data?.length ?? 0) === 0 ? (
-          <EmptyState
-            title="No pending requests"
-            description="Requests to follow you will appear here."
-          />
+          <Empty>
+            <EmptyHeader>
+              <EmptyTitle>No pending requests</EmptyTitle>
+              <EmptyDescription>
+                Requests to follow you will appear here.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="flex flex-col gap-2">
             {(incoming.data ?? []).map((user) => (
@@ -75,10 +84,14 @@ export default function FollowRequestsPage() {
         {outgoing.isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : (outgoing.data?.length ?? 0) === 0 ? (
-          <EmptyState
-            title="No sent requests"
-            description="Requests you sent to private accounts will appear here."
-          />
+          <Empty>
+            <EmptyHeader>
+              <EmptyTitle>No sent requests</EmptyTitle>
+              <EmptyDescription>
+                Requests you sent to private accounts will appear here.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="flex flex-col gap-2">
             {(outgoing.data ?? []).map((user) => (

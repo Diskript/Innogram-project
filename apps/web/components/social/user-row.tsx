@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { Check, X } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui-kit/avatar";
+import { Button } from "@/components/ui-kit/button";
 import { FollowButton } from "@/components/social/follow-button";
 import type { FollowUser } from "@/lib/social";
+import { initials } from "@/lib/utils";
 
 interface UserRowProps {
   user: FollowUser;
@@ -25,7 +30,12 @@ export function UserRow({
   return (
     <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
       <Link href={`/profile/${user.userName}`} className="shrink-0">
-        <Avatar size="md" src={user.avatarUrl} alt={user.displayName} />
+        <Avatar>
+          {user.avatarUrl ? (
+            <AvatarImage src={user.avatarUrl} alt={user.displayName} />
+          ) : null}
+          <AvatarFallback>{initials(user.displayName)}</AvatarFallback>
+        </Avatar>
       </Link>
       <div className="min-w-0 flex-1">
         <Link

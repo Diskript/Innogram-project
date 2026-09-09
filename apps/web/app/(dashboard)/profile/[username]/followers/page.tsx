@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { UserListPage } from "@/components/social/user-list-page";
 import { getPublicProfile } from "@/lib/api-client";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui-kit/card";
+import { Skeleton } from "@/components/ui-kit/skeleton";
 
 export default function UserFollowersPage() {
   const params = useParams<{ username: string }>();

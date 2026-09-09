@@ -17,3 +17,13 @@ export function timeAgo(iso: string): string {
   if (days < 7) return `${days}d`;
   return date.toLocaleDateString();
 }
+
+export function initials(name: string | null | undefined): string {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}

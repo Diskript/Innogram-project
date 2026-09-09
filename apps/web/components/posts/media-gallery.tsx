@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getAssetBlobUrl } from "@/lib/media";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui-kit/skeleton";
 import type { FeedAsset, FeedPostAsset } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 
@@ -65,11 +65,11 @@ export function MediaGallery({ assets }: { assets: FeedPostAsset[] }) {
   if (assets.length === 1) {
     const { asset } = assets[0];
     return asset.fileType.startsWith("video/") ? (
-      <div className="mt-3 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-900">
+      <div className="mt-3 overflow-hidden rounded-lg bg-[var(--ts-bubble)]">
         <AssetVideo asset={asset} className="max-h-[480px]" />
       </div>
     ) : (
-      <div className="mt-3 max-h-[480px] overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-900">
+      <div className="mt-3 max-h-[480px] overflow-hidden rounded-lg bg-[var(--ts-bubble)]">
         <AssetImage asset={asset} alt="post media" className="max-h-[480px]" />
       </div>
     );
@@ -80,14 +80,14 @@ export function MediaGallery({ assets }: { assets: FeedPostAsset[] }) {
         asset.fileType.startsWith("video/") ? (
           <div
             key={asset.id}
-            className="aspect-square overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-900"
+            className="aspect-square overflow-hidden rounded-lg bg-[var(--ts-bubble)]"
           >
             <AssetVideo asset={asset} className="h-full w-full" />
           </div>
         ) : (
           <div
             key={asset.id}
-            className="aspect-square overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-900"
+            className="aspect-square overflow-hidden rounded-lg bg-[var(--ts-bubble)]"
           >
             <AssetImage asset={asset} alt="post media" />
           </div>
