@@ -62,6 +62,65 @@ jobs:
       - name: Run type check
         run: pnpm check-types
 
+  test:
+    name: Test & Coverage
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-alpine
+    steps:
+      - name: Install system dependencies
+        run: apk add --no-cache libc6-compat openssl git bash
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Clean build caches
+        run: rm -f packages/shared-types/tsconfig.tsbuildinfo packages/database/tsconfig.tsbuildinfo
+
+      - name: Build shared-types
+        run: pnpm --filter @repo/shared-types build
+
+      - name: Build database
+        run: pnpm --filter @repo/database build
+
+      - name: Run unit tests with coverage
+        run: pnpm -r --if-present test:cov
+
+      - name: Run core integration (e2e) tests
+        run: pnpm --filter @repo/api-core test:e2e
+
+      - name: Upload core coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-core
+          path: apps/api/apps/core-microservice/coverage/
+
+      - name: Upload auth coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-auth
+          path: apps/api/apps/auth-microservice/coverage/
+
+      - name: Upload web coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web
+          path: apps/web/coverage/
+
   build:
     name: Build
     runs-on: ubuntu-latest
