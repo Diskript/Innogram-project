@@ -40,9 +40,9 @@ describe("layout components", () => {
       mockNextNavigation("/chat");
       render(<Sidebar />);
       const chatLink = screen.getByRole("link", { name: /Chat/ });
-      expect(chatLink).toHaveClass("bg-neutral-100");
+      expect(chatLink).toHaveClass("airmail-active");
       const feedLink = screen.getByRole("link", { name: /Feed/ });
-      expect(feedLink).not.toHaveClass("bg-neutral-100");
+      expect(feedLink).not.toHaveClass("airmail-active");
     });
 
     it("shows unread badges for chat and notifications", () => {

@@ -30,18 +30,7 @@ import { Skeleton } from "@/components/ui-kit/skeleton";
 import { Spinner } from "@/components/ui-kit/spinner";
 import { Switch } from "@/components/ui-kit/switch";
 import { Textarea } from "@/components/ui-kit/textarea";
-
-// jsdom (jest 29) lacks the pointer-capture APIs Radix Select calls in its
-// trigger/item pointerdown handlers, and scrollIntoView used when opening.
-if (!HTMLElement.prototype.hasPointerCapture) {
-  HTMLElement.prototype.hasPointerCapture = () => false;
-}
-if (!HTMLElement.prototype.releasePointerCapture) {
-  HTMLElement.prototype.releasePointerCapture = () => {};
-}
-if (!HTMLElement.prototype.scrollIntoView) {
-  HTMLElement.prototype.scrollIntoView = () => {};
-}
+import "@/test/radix-shims";
 
 describe("ui-kit primitives", () => {
   describe("Button", () => {

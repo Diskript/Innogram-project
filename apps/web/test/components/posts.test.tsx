@@ -1,6 +1,7 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import "@/test/radix-shims";
 import "@/test/mocks/contexts";
 import { mockAuth } from "@/test/mocks/contexts";
 import { renderWithProviders } from "@/test/render-with-providers";
@@ -88,8 +89,12 @@ describe("posts components", () => {
       const user = userEvent.setup();
       renderWithProviders(<PostCard post={makePost()} queryKey={["feed"]} />);
       await user.click(screen.getByRole("button", { name: "Post actions" }));
-      expect(screen.getByText("Edit")).toBeInTheDocument();
-      expect(screen.getByText("Delete")).toBeInTheDocument();
+      expect(
+        screen.getByRole("menuitem", { name: "Edit" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("menuitem", { name: "Delete" }),
+      ).toBeInTheDocument();
     });
 
     it("deletes own post after confirmation", async () => {
@@ -97,11 +102,13 @@ describe("posts components", () => {
       const user = userEvent.setup();
       renderWithProviders(<PostCard post={makePost()} queryKey={["feed"]} />);
       await user.click(screen.getByRole("button", { name: "Post actions" }));
-      await user.click(screen.getByText("Delete"));
+      await user.click(screen.getByRole("menuitem", { name: "Delete" }));
+      const dialog = screen.getByRole("alertdialog");
+      expect(within(dialog).getByText("Delete this post?")).toBeInTheDocument();
       expect(
-        screen.getByText("Delete this post permanently?"),
+        within(dialog).getByText('"Hello world" will be permanently removed.'),
       ).toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: "Delete" }));
+      await user.click(within(dialog).getByRole("button", { name: "Delete" }));
       expect(deletePost).toHaveBeenCalledWith("post-1");
     });
 
@@ -151,7 +158,7 @@ describe("posts components", () => {
       const user = userEvent.setup();
       renderWithProviders(<PostComposer queryKey={["feed"]} />);
       await user.type(
-        screen.getByPlaceholderText("Share something with the community..."),
+        screen.getByPlaceholderText("What's happening?"),
         "my first post",
       );
       await user.click(screen.getByRole("button", { name: "Post" }));
@@ -167,10 +174,14 @@ describe("posts components", () => {
       const user = userEvent.setup();
       renderWithProviders(<PostComposer queryKey={["feed"]} />);
       await user.type(
-        screen.getByPlaceholderText("Share something with the community..."),
+        screen.getByPlaceholderText("What's happening?"),
         "private note",
       );
-      await user.selectOptions(screen.getByRole("combobox"), "FOLLOWERS");
+      // Radix hides the trigger from the a11y tree while the listbox is open,
+      // so capture the node while closed and reuse it to open the popup.
+      const visibilityTrigger = screen.getByRole("combobox");
+      await user.click(visibilityTrigger);
+      await user.click(screen.getByRole("option", { name: "Followers" }));
       await user.click(screen.getByRole("button", { name: "Post" }));
       expect(createPost).toHaveBeenCalledWith({
         content: "private note",
@@ -307,9 +318,13 @@ describe("posts components", () => {
           setFilter={setFilter}
         />,
       );
+      // Radix hides the trigger from the a11y tree while its listbox is open,
+      // so capture both triggers while closed and reuse the references.
       const [sortSelect, filterSelect] = screen.getAllByRole("combobox");
-      await user.selectOptions(sortSelect!, "likes");
-      await user.selectOptions(filterSelect!, "media");
+      await user.click(sortSelect!);
+      await user.click(screen.getByRole("option", { name: "Most liked" }));
+      await user.click(filterSelect!);
+      await user.click(screen.getByRole("option", { name: "With media" }));
       expect(setSort).toHaveBeenCalledWith("likes");
       expect(setFilter).toHaveBeenCalledWith("media");
     });
