@@ -124,6 +124,9 @@ jobs:
       - name: Run core integration (e2e) tests
         run: pnpm --filter @repo/api-core test:e2e
 
+      - name: Run auth integration (e2e) tests
+        run: pnpm --filter @repo/api-auth test:e2e
+
       - name: Upload core coverage
         if: always()
         uses: actions/upload-artifact@v4
