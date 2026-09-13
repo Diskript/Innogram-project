@@ -27,6 +27,7 @@ describe("ChatService", () => {
       update: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
+      groupBy: jest.fn(),
     },
   };
 
@@ -123,6 +124,7 @@ describe("ChatService", () => {
         { conversation: mockConversation },
       ]);
       mockPrisma.conversation_Participant.count.mockResolvedValue(1);
+      mockPrisma.message.groupBy.mockResolvedValue([]);
 
       const result = await service.findUserConversations("user-1", {});
 
@@ -300,16 +302,24 @@ describe("ChatService", () => {
         baseParticipation(new Date("2026-08-01T00:00:00Z")),
       ]);
       mockPrisma.conversation_Participant.count.mockResolvedValue(1);
-      mockPrisma.message.count.mockResolvedValue(3);
+      mockPrisma.message.groupBy.mockResolvedValue([
+        { conversationId: "conv-1", _count: { _all: 3 } },
+      ]);
 
       const result = await service.findUserConversations("user-1", {});
 
-      expect(mockPrisma.message.count).toHaveBeenCalledWith({
+      expect(mockPrisma.message.groupBy).toHaveBeenCalledWith({
+        by: ["conversationId"],
         where: {
-          conversationId: "conv-1",
           senderId: { not: "user-1" },
-          createdAt: { gt: new Date("2026-08-01T00:00:00Z") },
+          OR: [
+            {
+              conversationId: "conv-1",
+              createdAt: { gt: new Date("2026-08-01T00:00:00Z") },
+            },
+          ],
         },
+        _count: { _all: true },
       });
       expect(result.data[0].unreadCount).toBe(3);
     });
@@ -319,12 +329,19 @@ describe("ChatService", () => {
         baseParticipation(null),
       ]);
       mockPrisma.conversation_Participant.count.mockResolvedValue(1);
-      mockPrisma.message.count.mockResolvedValue(5);
+      mockPrisma.message.groupBy.mockResolvedValue([
+        { conversationId: "conv-1", _count: { _all: 5 } },
+      ]);
 
       const result = await service.findUserConversations("user-1", {});
 
-      expect(mockPrisma.message.count).toHaveBeenCalledWith({
-        where: { conversationId: "conv-1", senderId: { not: "user-1" } },
+      expect(mockPrisma.message.groupBy).toHaveBeenCalledWith({
+        by: ["conversationId"],
+        where: {
+          senderId: { not: "user-1" },
+          OR: [{ conversationId: "conv-1" }],
+        },
+        _count: { _all: true },
       });
       expect(result.data[0].unreadCount).toBe(5);
     });

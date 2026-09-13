@@ -99,6 +99,12 @@ export class ChatService {
               messages: {
                 orderBy: { createdAt: "desc" },
                 take: 1,
+                select: {
+                  id: true,
+                  senderId: true,
+                  content: true,
+                  createdAt: true,
+                },
               },
             },
           },
@@ -109,21 +115,31 @@ export class ChatService {
       }),
     ]);
 
-    const unreadCounts = await Promise.all(
-      participations.map((p) =>
-        this.prismaService.client.message.count({
-          where: {
-            conversationId: p.conversation.id,
-            senderId: { not: userId },
-            ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
-          },
-        }),
-      ),
+    // One grouped query replaces the per-conversation message.count calls
+    // (N+1 for a list of 20 conversations). Each conversation gets its own
+    // read-cutoff via the OR conditions.
+    const unreadRows =
+      participations.length > 0
+        ? await this.prismaService.client.message.groupBy({
+            by: ["conversationId"],
+            where: {
+              senderId: { not: userId },
+              OR: participations.map((p) => ({
+                conversationId: p.conversation.id,
+                ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+              })),
+            },
+            _count: { _all: true },
+          })
+        : [];
+
+    const unreadByConversation = new Map(
+      unreadRows.map((row) => [row.conversationId, row._count._all]),
     );
 
-    const data = participations.map((p, i) => ({
+    const data = participations.map((p) => ({
       ...this.toConversationResponse(p.conversation),
-      unreadCount: unreadCounts[i],
+      unreadCount: unreadByConversation.get(p.conversation.id) ?? 0,
     }));
 
     return { data, total, skip, take };
