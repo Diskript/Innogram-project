@@ -65,6 +65,11 @@ jobs:
       - name: Apply database migrations
         run: pnpm --filter @repo/database exec prisma migrate deploy
 
+      - name: Build API services
+        run: |
+          pnpm --filter @repo/api-core build
+          pnpm --filter @repo/api-auth build
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 

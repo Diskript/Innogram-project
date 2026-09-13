@@ -95,10 +95,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      # No actions/setup-node here: the node:20-alpine image already provides a
+      # musl-native Node 20. setup-node downloads a glibc build which crashes on
+      # Alpine ("fcntl64: symbol not found").
 
       - name: Install pnpm
         run: npm install -g pnpm@9
