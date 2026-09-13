@@ -224,6 +224,9 @@ importers:
       helmet:
         specifier: ^8.1.0
         version: 8.1.0
+      ioredis:
+        specifier: ^5.10.1
+        version: 5.10.1
       mime-types:
         specifier: ^3.0.2
         version: 3.0.2
