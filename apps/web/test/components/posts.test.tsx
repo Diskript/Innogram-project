@@ -129,6 +129,7 @@ describe("posts components", () => {
                   fileType: "image/png",
                   width: 800,
                   height: 600,
+                  processingStatus: "READY" as const,
                 },
               },
             ],
@@ -196,6 +197,7 @@ describe("posts components", () => {
       jest.mocked(getComments).mockResolvedValue({
         data: [],
         total: 0,
+        nextCursor: null,
         skip: 0,
         take: 10,
       });
@@ -207,6 +209,7 @@ describe("posts components", () => {
       jest.mocked(getComments).mockResolvedValue({
         data: [makeComment()],
         total: 1,
+        nextCursor: null,
         skip: 0,
         take: 10,
       });
@@ -219,6 +222,7 @@ describe("posts components", () => {
       jest.mocked(getComments).mockResolvedValue({
         data: [],
         total: 0,
+        nextCursor: null,
         skip: 0,
         take: 10,
       });
@@ -241,6 +245,7 @@ describe("posts components", () => {
       jest.mocked(getComments).mockResolvedValue({
         data: [makeComment({ userId: USER_ID })],
         total: 1,
+        nextCursor: null,
         skip: 0,
         take: 10,
       });
@@ -252,6 +257,42 @@ describe("posts components", () => {
       });
       await user.click(likeButton);
       expect(toggleCommentLike).toHaveBeenCalledWith("comment-1");
+    });
+
+    it("loads more comments via the cursor and hides the button on the last page", async () => {
+      const user = userEvent.setup();
+      jest
+        .mocked(getComments)
+        .mockResolvedValueOnce({
+          data: [makeComment({ id: "c1", content: "first page" })],
+          total: 3,
+          nextCursor: "c1",
+          skip: 0,
+          take: 1,
+        })
+        .mockResolvedValueOnce({
+          data: [makeComment({ id: "c2", content: "second page" })],
+          total: 3,
+          nextCursor: null,
+          skip: 0,
+          take: 1,
+        });
+
+      renderWithProviders(<CommentsSection postId="post-1" />);
+
+      expect(await screen.findByText("first page")).toBeInTheDocument();
+      const loadMore = screen.getByRole("button", { name: "Load more" });
+
+      await user.click(loadMore);
+
+      expect(getComments).toHaveBeenLastCalledWith(
+        "post-1",
+        expect.objectContaining({ cursor: "c1" }),
+      );
+      expect(await screen.findByText("second page")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Load more" }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -266,6 +307,7 @@ describe("posts components", () => {
         fileType: "image/png",
         width: 800,
         height: 600,
+        processingStatus: "READY" as const,
       },
     };
 
@@ -279,6 +321,7 @@ describe("posts components", () => {
         fileType: "video/mp4",
         width: null,
         height: null,
+        processingStatus: "READY" as const,
       },
     };
 

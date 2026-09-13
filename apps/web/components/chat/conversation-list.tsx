@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Users } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,12 +59,21 @@ export function ConversationList() {
     null,
   );
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["chat", "conversations"],
-    queryFn: () => getConversations({ skip: 0, take: 50 }),
-  });
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["chat", "conversations"],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam }) =>
+        getConversations(
+          pageParam ? { cursor: pageParam, take: 50 } : { take: 50 },
+        ),
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    });
 
-  const conversations = data?.data ?? [];
+  const conversations = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
 
   const handleMarkRead = async (id: string) => {
     await markConversationRead(id);
@@ -116,94 +125,105 @@ export function ConversationList() {
             No conversations yet. Start one with New chat.
           </div>
         ) : (
-          conversations.map((conversation) => {
-            const active = pathname === `/chat/${conversation.id}`;
-            const title = conversationTitle(conversation, user!.userId);
-            const initials = title
-              .split(" ")
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
-            const preview = conversation.lastMessage
-              ? `${
-                  conversation.lastMessage.senderId === user?.userId
-                    ? "You: "
-                    : ""
-                }${conversation.lastMessage.content}`
-              : "No messages yet";
+          <>
+            {conversations.map((conversation) => {
+              const active = pathname === `/chat/${conversation.id}`;
+              const title = conversationTitle(conversation, user!.userId);
+              const initials = title
+                .split(" ")
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
+              const preview = conversation.lastMessage
+                ? `${
+                    conversation.lastMessage.senderId === user?.userId
+                      ? "You: "
+                      : ""
+                  }${conversation.lastMessage.content}`
+                : "No messages yet";
 
-            return (
-              <button
-                key={conversation.id}
-                onClick={() => router.push(`/chat/${conversation.id}`)}
-                className={`flex w-full items-center gap-3 border-b border-[var(--chat-border)] px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--chat-panel)] ${
-                  active ? "airmail-active" : ""
-                }`}
-              >
-                <div className="relative flex-shrink-0">
-                  {conversation.isGroup ? (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-violet)] to-[#5b4bc4]">
-                      <Users className="h-4 w-4 text-white" />
-                    </div>
-                  ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[#d97706] text-xs font-semibold text-[var(--chat-amber-ink)]">
-                      {initials}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] font-semibold">
-                    {title}
-                  </div>
-                  <div className="truncate text-[11.5px] text-[var(--chat-text-secondary)]">
-                    {preview}
-                  </div>
-                </div>
-                {(conversation.unreadCount || 0) > 0 && (
-                  <span className="glow-soft flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[var(--chat-amber-deep)] px-1.5 text-[10px] font-bold text-[var(--chat-amber-ink)]">
-                    {conversation.unreadCount > 99
-                      ? "99+"
-                      : conversation.unreadCount}
-                  </span>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => e.stopPropagation()}
-                      className="rounded-md p-1 text-[var(--chat-text-tertiary)] hover:bg-[var(--chat-panel)] hover:text-[var(--chat-text)]"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </span>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44">
-                    <DropdownMenuItem
-                      onClick={() => void handleMarkRead(conversation.id)}
-                    >
-                      Mark as read
-                    </DropdownMenuItem>
-                    {isActiveAdminOnly(conversation, user!.userId) ? (
-                      <DropdownMenuItem
-                        className="text-[#ff7a6e] focus:text-[#ff7a6e]"
-                        onClick={() => setPendingDelete(conversation)}
-                      >
-                        Delete conversation
-                      </DropdownMenuItem>
+              return (
+                <button
+                  key={conversation.id}
+                  onClick={() => router.push(`/chat/${conversation.id}`)}
+                  className={`flex w-full items-center gap-3 border-b border-[var(--chat-border)] px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--chat-panel)] ${
+                    active ? "airmail-active" : ""
+                  }`}
+                >
+                  <div className="relative flex-shrink-0">
+                    {conversation.isGroup ? (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-violet)] to-[#5b4bc4]">
+                        <Users className="h-4 w-4 text-white" />
+                      </div>
                     ) : (
-                      <DropdownMenuItem
-                        className="text-[#ff7a6e] focus:text-[#ff7a6e]"
-                        onClick={() => void handleLeave(conversation)}
-                      >
-                        Leave conversation
-                      </DropdownMenuItem>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[#d97706] text-xs font-semibold text-[var(--chat-amber-ink)]">
+                        {initials}
+                      </div>
                     )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-semibold">
+                      {title}
+                    </div>
+                    <div className="truncate text-[11.5px] text-[var(--chat-text-secondary)]">
+                      {preview}
+                    </div>
+                  </div>
+                  {(conversation.unreadCount || 0) > 0 && (
+                    <span className="glow-soft flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[var(--chat-amber-deep)] px-1.5 text-[10px] font-bold text-[var(--chat-amber-ink)]">
+                      {conversation.unreadCount > 99
+                        ? "99+"
+                        : conversation.unreadCount}
+                    </span>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => e.stopPropagation()}
+                        className="rounded-md p-1 text-[var(--chat-text-tertiary)] hover:bg-[var(--chat-panel)] hover:text-[var(--chat-text)]"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem
+                        onClick={() => void handleMarkRead(conversation.id)}
+                      >
+                        Mark as read
+                      </DropdownMenuItem>
+                      {isActiveAdminOnly(conversation, user!.userId) ? (
+                        <DropdownMenuItem
+                          className="text-[#ff7a6e] focus:text-[#ff7a6e]"
+                          onClick={() => setPendingDelete(conversation)}
+                        >
+                          Delete conversation
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          className="text-[#ff7a6e] focus:text-[#ff7a6e]"
+                          onClick={() => void handleLeave(conversation)}
+                        >
+                          Leave conversation
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </button>
+              );
+            })}
+            {hasNextPage && (
+              <button
+                disabled={isFetchingNextPage}
+                onClick={() => void fetchNextPage()}
+                className="w-full border-b border-[var(--chat-border)] px-3.5 py-2.5 text-center text-xs text-[var(--chat-text-secondary)] transition-colors hover:bg-[var(--chat-panel)]"
+              >
+                Load more
               </button>
-            );
-          })
+            )}
+          </>
         )}
       </div>
 

@@ -67,16 +67,17 @@ export function createConversation(input: {
 }
 
 export function getConversations(params?: {
-  skip?: number;
+  cursor?: string;
   take?: number;
 }): Promise<{
   data: ChatConversation[];
   total: number;
+  nextCursor: string | null;
   skip: number;
   take: number;
 }> {
-  const query: Record<string, string> = {};
-  if (params?.skip !== undefined) query.skip = String(params.skip);
+  const query: Record<string, string> = { skip: "0" };
+  if (params?.cursor) query.cursor = params.cursor;
   if (params?.take !== undefined) query.take = String(params.take);
   return api.get(
     "/chat/conversations",
@@ -90,14 +91,16 @@ export function getConversation(id: string): Promise<ChatConversation> {
 
 export function getMessages(
   id: string,
-  params?: { skip?: number; take?: number },
+  params?: { cursor?: string; skip?: number; take?: number },
 ): Promise<{
   data: ChatMessage[];
   total: number;
+  nextCursor: string | null;
   skip: number;
   take: number;
 }> {
   const query: Record<string, string> = {};
+  if (params?.cursor) query.cursor = params.cursor;
   if (params?.skip !== undefined) query.skip = String(params.skip);
   if (params?.take !== undefined) query.take = String(params.take);
   return api.get(

@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Heart, MessageCircle, Pencil, Trash2, Reply } from "lucide-react";
 import {
   Avatar,
@@ -43,10 +47,19 @@ export function CommentsSection({ postId }: { postId: string }) {
     {},
   );
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["comments", postId],
-    queryFn: () => getComments(postId),
-  });
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["comments", postId],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam }) =>
+        getComments(postId, pageParam ? { cursor: pageParam } : undefined),
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    });
+
+  const comments = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
 
   const invalidateComments = () =>
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -251,7 +264,7 @@ export function CommentsSection({ postId }: { postId: string }) {
           </Button>
         </div>
       </div>
-      {(data?.data.length ?? 0) === 0 ? (
+      {comments.length === 0 && !isLoading ? (
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -265,7 +278,17 @@ export function CommentsSection({ postId }: { postId: string }) {
         </Empty>
       ) : (
         <div className="flex flex-col gap-4">
-          {(data?.data ?? []).map((c) => renderComment(c))}
+          {comments.map((c) => renderComment(c))}
+          {hasNextPage && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isFetchingNextPage}
+              onClick={() => void fetchNextPage()}
+            >
+              Load more
+            </Button>
+          )}
         </div>
       )}
     </div>

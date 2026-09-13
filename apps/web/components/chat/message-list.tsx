@@ -19,20 +19,22 @@ export function MessageList({ conversationId }: { conversationId: string }) {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: ["chat", "messages", conversationId],
-      initialPageParam: undefined as number | undefined,
+      initialPageParam: undefined as string | undefined,
       queryFn: async ({ pageParam }) => {
         if (pageParam === undefined) {
+          // Newest window: compute its offset from the head count (the
+          // API walks createdAt DESC, so "skip" still selects the tail).
           const head = await getMessages(conversationId, { skip: 0, take: 1 });
           const skip = Math.max(head.total - PAGE_SIZE, 0);
           return getMessages(conversationId, { skip, take: PAGE_SIZE });
         }
+        // Older pages walk the keyset cursor.
         return getMessages(conversationId, {
-          skip: pageParam,
+          cursor: pageParam,
           take: PAGE_SIZE,
         });
       },
-      getNextPageParam: (lastPage) =>
-        lastPage.skip > 0 ? Math.max(lastPage.skip - PAGE_SIZE, 0) : undefined,
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     });
 
   const ascending = useMemo(() => {
@@ -117,9 +119,14 @@ export function MessageList({ conversationId }: { conversationId: string }) {
         className="chat-aurora h-full overflow-y-auto px-5 py-4"
       >
         {hasNextPage && (
-          <div className="pb-3 text-center text-[11px] text-[var(--chat-text-tertiary)]">
-            {isFetchingNextPage ? "Loading history…" : ""}
-          </div>
+          <button
+            data-testid="load-older"
+            disabled={isFetchingNextPage}
+            onClick={() => void fetchNextPage()}
+            className="block w-full pb-3 text-center text-[11px] text-[var(--chat-text-tertiary)]"
+          >
+            {isFetchingNextPage ? "Loading history…" : "Load older messages"}
+          </button>
         )}
         {ascending.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-[var(--chat-text-tertiary)]">

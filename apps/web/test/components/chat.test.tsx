@@ -217,12 +217,14 @@ describe("chat components", () => {
         .mockResolvedValueOnce({
           data: [newer],
           total: 2,
+          nextCursor: null,
           skip: 0,
           take: 1,
         })
         .mockResolvedValue({
           data: [older, newer],
           total: 2,
+          nextCursor: null,
           skip: 1,
           take: 50,
         });
@@ -239,6 +241,60 @@ describe("chat components", () => {
         skip: 0,
         take: 50,
       });
+    });
+
+    it("loads older messages through the keyset cursor", async () => {
+      const newest = makeMessage({
+        id: "message-newest",
+        content: "newest message",
+        createdAt: "2026-01-01T00:02:00.000Z",
+      });
+      const older = makeMessage({
+        id: "message-old",
+        content: "older message",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      });
+      jest
+        .mocked(getMessages)
+        .mockResolvedValueOnce({
+          data: [newest],
+          total: 2,
+          nextCursor: null,
+          skip: 1,
+          take: 1,
+        })
+        .mockResolvedValueOnce({
+          data: [newest],
+          total: 2,
+          nextCursor: "message-newest",
+          skip: 0,
+          take: 50,
+        })
+        .mockResolvedValueOnce({
+          data: [older],
+          total: 2,
+          nextCursor: null,
+          skip: 0,
+          take: 50,
+        });
+
+      const { container } = renderWithProviders(
+        <MessageList conversationId="conversation-1" />,
+      );
+
+      await screen.findByText("newest message");
+
+      const loadOlder = container.querySelector('[data-testid="load-older"]');
+      expect(loadOlder).toBeInTheDocument();
+
+      await userEvent.click(loadOlder as HTMLElement);
+
+      expect(getMessages).toHaveBeenLastCalledWith("conversation-1", {
+        cursor: "message-newest",
+        take: 50,
+      });
+      await screen.findByText("older message");
+      expect(screen.getByText("newest message")).toBeInTheDocument();
     });
   });
 
@@ -288,6 +344,7 @@ describe("chat components", () => {
       jest.mocked(getConversations).mockResolvedValue({
         data: [],
         total: 0,
+        nextCursor: null,
         skip: 0,
         take: 50,
       });
@@ -295,7 +352,7 @@ describe("chat components", () => {
       expect(
         await screen.findByText(/No conversations yet/),
       ).toBeInTheDocument();
-      expect(getConversations).toHaveBeenCalledWith({ skip: 0, take: 50 });
+      expect(getConversations).toHaveBeenCalledWith({ take: 50 });
     });
 
     it("renders conversation rows with title and preview", async () => {
@@ -311,6 +368,7 @@ describe("chat components", () => {
           }),
         ],
         total: 1,
+        nextCursor: null,
         skip: 0,
         take: 50,
       });
@@ -324,6 +382,7 @@ describe("chat components", () => {
       jest.mocked(getConversations).mockResolvedValue({
         data: [twoUserConversation()],
         total: 1,
+        nextCursor: null,
         skip: 0,
         take: 50,
       });
@@ -338,6 +397,7 @@ describe("chat components", () => {
       jest.mocked(getConversations).mockResolvedValue({
         data: [twoUserConversation({ unreadCount: 4 })],
         total: 1,
+        nextCursor: null,
         skip: 0,
         take: 50,
       });
@@ -574,6 +634,7 @@ describe("chat components", () => {
       jest.mocked(getConversations).mockResolvedValue({
         data: [],
         total: 0,
+        nextCursor: null,
         skip: 0,
         take: 50,
       });
