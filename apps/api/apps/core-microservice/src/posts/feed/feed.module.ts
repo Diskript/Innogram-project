@@ -1,11 +1,12 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "../../prisma/prisma.module";
 import { FollowingsModule } from "../../profile/followings/followings.module";
+import { CacheModule } from "../../cache/cache.module";
 import { FeedService } from "./feed.service";
 import { FeedController } from "./feed.controller";
 
 @Module({
-  imports: [PrismaModule, FollowingsModule],
+  imports: [PrismaModule, FollowingsModule, CacheModule],
   providers: [FeedService],
   controllers: [FeedController],
   exports: [FeedService],

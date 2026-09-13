@@ -1,18 +1,31 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { FollowingsService } from "../../profile/followings/followings.service";
+import { RedisService } from "../../cache/redis.service";
 import { JwtUser, QueryFeedDto } from "@repo/shared-types";
 import { Prisma, Visibility } from "@repo/database";
+
+const FEED_TTL_SECONDS = 60;
 
 @Injectable()
 export class FeedService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly followingsService: FollowingsService,
+    private readonly redisService: RedisService,
   ) {}
 
   async generateFeed(user: JwtUser, query: QueryFeedDto) {
     const { cursor, take = 20 } = query;
+
+    // The payload embeds the requesting user's like-state (postLikes
+    // filtered by userId, which the web layer maps to likedByMe), so the
+    // key MUST be scoped per user, not just per page.
+    const cacheKey = `feed:public:${user.userId}:${cursor ?? "start"}:${take}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
     const acceptedFollowingIds =
       await this.followingsService.getAcceptedFollowingIds(user);
@@ -97,11 +110,15 @@ export class FeedService {
     const items = hasMore ? posts.slice(0, take) : posts;
     const nextCursor = items.length > 0 ? items[items.length - 1].id : null;
 
-    return {
+    const result = {
       data: items,
       total,
       nextCursor: hasMore ? nextCursor : null,
       hasMore,
     };
+
+    await this.redisService.set(cacheKey, result, FEED_TTL_SECONDS);
+
+    return result;
   }
 }
