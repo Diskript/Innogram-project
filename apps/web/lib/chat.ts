@@ -1,6 +1,13 @@
 import { api } from "@/lib/api-client";
 import type { UploadedAsset } from "@/lib/posts";
 
+export function mapConversationPages<T extends { data: ChatConversation[] }>(
+  pages: T[],
+  fn: (conversation: ChatConversation) => ChatConversation,
+): T[] {
+  return pages.map((page) => ({ ...page, data: page.data.map(fn) }));
+}
+
 export interface ChatParticipant {
   id: string;
   userId: string;

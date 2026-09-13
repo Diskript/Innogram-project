@@ -1,7 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { MoreHorizontal, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -77,17 +81,20 @@ export function ConversationList() {
 
   const handleMarkRead = async (id: string) => {
     await markConversationRead(id);
-    queryClient.setQueryData<{ data: ChatConversation[] }>(
-      ["chat", "conversations"],
-      (old) =>
-        old
-          ? {
-              ...old,
-              data: old.data.map((c) =>
+    queryClient.setQueryData<
+      InfiniteData<{ data: ChatConversation[]; nextCursor: string | null }>
+    >(["chat", "conversations"], (old) =>
+      old
+        ? {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((c) =>
                 c.id === id ? { ...c, unreadCount: 0 } : c,
               ),
-            }
-          : old,
+            })),
+          }
+        : old,
     );
   };
 
