@@ -28,11 +28,14 @@ jobs:
         ports: ["6379:6379"]
       rabbitmq:
         image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: innogram
+          RABBITMQ_DEFAULT_PASS: innogram_password
         ports: ["5672:5672"]
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/innogram_test
       REDIS_URL: redis://localhost:6379
-      RABBITMQ_URL: amqp://guest:guest@localhost:5672
+      RABBITMQ_URL: amqp://innogram:innogram_password@localhost:5672
       JWT_SECRET: e2e-test-secret
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
