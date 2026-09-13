@@ -35,6 +35,13 @@ export class AmqpService implements OnModuleDestroy {
 
   registerTopology(fn: () => Promise<void>): void {
     this.topology.push(fn);
+    if (this.channel) {
+      // Already connected: consumers register topology during app bootstrap,
+      // after the eager connect in AmqpModule.onModuleInit — so run it now.
+      void fn().catch((error: Error) =>
+        this.logger.error(`RabbitMQ topology setup failed: ${error.message}`),
+      );
+    }
   }
 
   private async doConnectWithRetry(): Promise<void> {
@@ -51,7 +58,21 @@ export class AmqpService implements OnModuleDestroy {
     const url = getRabbitMqUrl();
     const conn = await amqplib.connect(url);
     this.connection = conn;
-    this.channel = await conn.createChannel();
+    conn.on("error", (error: Error) => {
+      this.logger.error(`RabbitMQ connection error: ${error.message}`);
+    });
+    const channel = await conn.createChannel();
+    channel.on("error", (error: Error) => {
+      this.logger.error(`RabbitMQ channel error: ${error.message}`);
+      // Channel-level errors (e.g. publish to a missing exchange) close the
+      // channel server-side; recycle the connection so the close handler
+      // reconnects instead of leaving the process without an error listener.
+      const conn = this.connection;
+      if (conn) {
+        void conn.close().catch(() => undefined);
+      }
+    });
+    this.channel = channel;
     this.logger.log("Connected to RabbitMQ");
     conn.on("close", () => {
       this.connection = null;
@@ -153,7 +174,19 @@ export class AmqpService implements OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     this.shuttingDown = true;
-    await this.channel?.close();
-    await this.connection?.close();
+    try {
+      await this.channel?.close();
+    } catch (error) {
+      this.logger.warn(
+        `RabbitMQ channel close failed: ${(error as Error).message}`,
+      );
+    }
+    try {
+      await this.connection?.close();
+    } catch (error) {
+      this.logger.warn(
+        `RabbitMQ connection close failed: ${(error as Error).message}`,
+      );
+    }
   }
 }

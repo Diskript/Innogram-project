@@ -127,11 +127,12 @@ describe("AmqpService resilience", () => {
     ack: jest.fn(),
     nack: jest.fn(),
     close: jest.fn(),
+    on: jest.fn(),
   };
 
   const makeConnection = () => ({
     createChannel: jest.fn().mockResolvedValue(mockChannel),
-    close: jest.fn(),
+    close: jest.fn().mockResolvedValue(undefined),
     on: jest.fn(),
   });
 
@@ -220,5 +221,48 @@ describe("AmqpService resilience", () => {
       expect.stringContaining("channel not available"),
     );
     expect(amqplibConnect).toHaveBeenCalled();
+  });
+
+  it("runs registered topology immediately when already connected", async () => {
+    const conn = makeConnection();
+    amqplibConnect.mockResolvedValue(conn);
+
+    const first = service.connect();
+    await jest.advanceTimersByTimeAsync(0);
+    await first;
+
+    const topology = jest.fn().mockResolvedValue(undefined);
+    service.registerTopology(topology);
+
+    await jest.advanceTimersByTimeAsync(0);
+    expect(topology).toHaveBeenCalledTimes(1);
+  });
+
+  it("recycles the connection and reconnects after a channel error", async () => {
+    const conn = makeConnection();
+    amqplibConnect.mockResolvedValue(conn);
+
+    const first = service.connect();
+    await jest.advanceTimersByTimeAsync(0);
+    await first;
+
+    const errorHandler = mockChannel.on.mock.calls.find(
+      (c: unknown[]) => c[0] === "error",
+    )?.[1] as (err: Error) => void;
+    errorHandler(new Error("NOT_FOUND - no exchange 'chat.direct'"));
+
+    await jest.advanceTimersByTimeAsync(0);
+    await Promise.resolve();
+    expect(conn.close).toHaveBeenCalled();
+
+    // Mocked connection: simulate the broker-side close event that follows.
+    const closeHandler = conn.on.mock.calls.find(
+      (c: unknown[]) => c[0] === "close",
+    )?.[1] as () => void;
+    closeHandler();
+
+    await jest.advanceTimersByTimeAsync(1_000);
+    await Promise.resolve();
+    expect(amqplibConnect).toHaveBeenCalledTimes(2);
   });
 });
