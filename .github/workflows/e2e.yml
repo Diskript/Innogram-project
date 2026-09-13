@@ -1,0 +1,94 @@
+name: E2E
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    name: Playwright
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: innogram_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports: ["5672:5672"]
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/innogram_test
+      REDIS_URL: redis://localhost:6379
+      RABBITMQ_URL: amqp://guest:guest@localhost:5672
+      JWT_SECRET: e2e-test-secret
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      HASH_SALT: $2b$10$abcdefghijklmnopqrstuvwx
+      CORE_SERVICE_URL: http://localhost:3001
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Clean build caches
+        run: rm -f packages/shared-types/tsconfig.tsbuildinfo packages/database/tsconfig.tsbuildinfo
+
+      - name: Build shared-types
+        run: pnpm --filter @repo/shared-types build
+
+      - name: Build database
+        run: pnpm --filter @repo/database build
+
+      - name: Apply database migrations
+        run: pnpm --filter @repo/database exec prisma migrate deploy
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Start core API (3001)
+        run: |
+          nohup env PORT=3001 pnpm --filter @repo/api-core start > core.log 2>&1 &
+          npx wait-on tcp:localhost:3001 -t 120000
+
+      - name: Start auth API (3002)
+        run: |
+          nohup env PORT=3002 pnpm --filter @repo/api-auth start > auth.log 2>&1 &
+          npx wait-on tcp:localhost:3002 -t 120000
+
+      - name: Run Playwright tests
+        run: pnpm e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results/
+            playwright-report/
+            core.log
+            auth.log
+          if-no-files-found: ignore
