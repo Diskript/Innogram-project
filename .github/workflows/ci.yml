@@ -83,11 +83,14 @@ jobs:
         ports: ["6379:6379"]
       rabbitmq:
         image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: innogram
+          RABBITMQ_DEFAULT_PASS: innogram_password
         ports: ["5672:5672"]
     env:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/innogram_test
       REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_URL: amqp://innogram:innogram_password@rabbitmq:5672
     steps:
       - name: Install system dependencies
         run: apk add --no-cache libc6-compat openssl git bash

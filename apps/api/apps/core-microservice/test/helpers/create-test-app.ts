@@ -36,6 +36,7 @@ class TestJwtAuthGuard implements CanActivate {
 function createAmqpMock() {
   return {
     connect: jest.fn(),
+    registerTopology: jest.fn(),
     publish: jest.fn(),
     setupQueue: jest.fn(),
     consume: jest.fn(),
