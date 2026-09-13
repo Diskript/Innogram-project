@@ -15,6 +15,7 @@ describe("MessageConsumer", () => {
     consume: jest.fn(),
     ack: jest.fn(),
     nack: jest.fn(),
+    registerTopology: jest.fn(),
   };
 
   const mockWsGateway = {
@@ -59,8 +60,12 @@ describe("MessageConsumer", () => {
   });
 
   describe("onApplicationBootstrap", () => {
-    it("should setup queue and register consumer", async () => {
+    it("registers topology that sets up queue and consumer", async () => {
       await consumer.onApplicationBootstrap();
+
+      expect(mockAmqpService.registerTopology).toHaveBeenCalledTimes(1);
+      const topologyFn = mockAmqpService.registerTopology.mock.calls[0][0];
+      await topologyFn();
 
       expect(mockAmqpService.setupQueue).toHaveBeenCalledWith(
         "chat.direct",
@@ -129,6 +134,15 @@ describe("MessageConsumer", () => {
 
       expect(mockAmqpService.nack).toHaveBeenCalledWith(msg, false);
       expect(mockWsGateway.sendToConversation).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("onApplicationBootstrap", () => {
+    it("registers topology instead of connecting directly", async () => {
+      await consumer.onApplicationBootstrap();
+      expect(mockAmqpService.registerTopology).toHaveBeenCalledTimes(1);
+      expect(mockAmqpService.setupQueue).not.toHaveBeenCalled();
+      expect(mockAmqpService.consume).not.toHaveBeenCalled();
     });
   });
 });

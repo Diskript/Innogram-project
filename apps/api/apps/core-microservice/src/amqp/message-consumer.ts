@@ -16,14 +16,16 @@ export class MessageConsumer implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    await this.amqpService.setupQueue(
-      "chat.direct",
-      "chat.message.deliver",
-      "#",
-      "chat.dlx",
-    );
-    await this.amqpService.consume("chat.message.deliver", async (msg) => {
-      await this.handleMessage(msg);
+    this.amqpService.registerTopology(async () => {
+      await this.amqpService.setupQueue(
+        "chat.direct",
+        "chat.message.deliver",
+        "#",
+        "chat.dlx",
+      );
+      await this.amqpService.consume("chat.message.deliver", async (msg) => {
+        await this.handleMessage(msg);
+      });
     });
   }
 
