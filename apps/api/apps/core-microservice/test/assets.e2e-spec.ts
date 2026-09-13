@@ -107,8 +107,10 @@ describe("Assets (integration)", () => {
       );
     });
 
-    it("generates thumbnails through the thumbnail service", async () => {
-      prisma.client.asset.create.mockResolvedValue(makeAssetRow());
+    it("persists PENDING and fills thumbnail data in the background (READY)", async () => {
+      prisma.client.asset.create.mockResolvedValue(
+        makeAssetRow({ id: ASSET_ID }),
+      );
 
       await request
         .post("/assets/upload")
@@ -122,11 +124,29 @@ describe("Assets (integration)", () => {
       expect(prisma.client.asset.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
+            processingStatus: "PENDING",
+            thumbnailPath: null,
+            mediumPath: null,
+            width: null,
+            height: null,
+            fileSize: 512,
+          }),
+        }),
+      );
+
+      // Let the deferred setImmediate processing run to completion.
+      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(prisma.client.asset.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: ASSET_ID },
+          data: expect.objectContaining({
             thumbnailPath: "public/thumbnail/t.png",
             mediumPath: "public/medium/m.png",
             width: 800,
             height: 600,
-            fileSize: 512,
+            processingStatus: "READY",
           }),
         }),
       );
