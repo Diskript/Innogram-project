@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { getAssetBlobUrl } from "@/lib/media";
 import { Skeleton } from "@/components/ui-kit/skeleton";
 import type { FeedAsset, FeedPostAsset } from "@/lib/posts";
@@ -12,6 +13,32 @@ function useAssetUrl(assetId: string) {
     queryFn: () => getAssetBlobUrl(assetId),
     staleTime: 60 * 60 * 1000,
   });
+}
+
+function ProcessingBadge() {
+  return (
+    <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-[var(--ts-bubble)] px-2 py-1 text-xs text-[var(--ts-muted)] shadow">
+      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+      <span>Processing</span>
+    </div>
+  );
+}
+
+function AssetFrame({
+  asset,
+  className,
+  children,
+}: {
+  asset: FeedAsset;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("relative", className)}>
+      {asset.processingStatus === "PENDING" && <ProcessingBadge />}
+      {children}
+    </div>
+  );
 }
 
 export function AssetImage({
@@ -66,11 +93,19 @@ export function MediaGallery({ assets }: { assets: FeedPostAsset[] }) {
     const { asset } = assets[0];
     return asset.fileType.startsWith("video/") ? (
       <div className="mt-3 overflow-hidden rounded-lg bg-[var(--ts-bubble)]">
-        <AssetVideo asset={asset} className="max-h-[480px]" />
+        <AssetFrame asset={asset}>
+          <AssetVideo asset={asset} className="max-h-[480px]" />
+        </AssetFrame>
       </div>
     ) : (
       <div className="mt-3 max-h-[480px] overflow-hidden rounded-lg bg-[var(--ts-bubble)]">
-        <AssetImage asset={asset} alt="post media" className="max-h-[480px]" />
+        <AssetFrame asset={asset}>
+          <AssetImage
+            asset={asset}
+            alt="post media"
+            className="max-h-[480px]"
+          />
+        </AssetFrame>
       </div>
     );
   }
@@ -82,14 +117,18 @@ export function MediaGallery({ assets }: { assets: FeedPostAsset[] }) {
             key={asset.id}
             className="aspect-square overflow-hidden rounded-lg bg-[var(--ts-bubble)]"
           >
-            <AssetVideo asset={asset} className="h-full w-full" />
+            <AssetFrame asset={asset}>
+              <AssetVideo asset={asset} className="h-full w-full" />
+            </AssetFrame>
           </div>
         ) : (
           <div
             key={asset.id}
             className="aspect-square overflow-hidden rounded-lg bg-[var(--ts-bubble)]"
           >
-            <AssetImage asset={asset} alt="post media" />
+            <AssetFrame asset={asset}>
+              <AssetImage asset={asset} alt="post media" />
+            </AssetFrame>
           </div>
         ),
       )}

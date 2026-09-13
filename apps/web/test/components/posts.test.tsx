@@ -303,6 +303,38 @@ describe("posts components", () => {
       });
       expect(container.querySelector("video")).toBeInTheDocument();
     });
+
+    it("shows a processing badge while an asset is PENDING", async () => {
+      jest.mocked(getAssetBlobUrl).mockResolvedValue("blob:mock-url");
+      renderWithProviders(
+        <MediaGallery
+          assets={[
+            {
+              ...imageAsset,
+              asset: { ...imageAsset.asset, processingStatus: "PENDING" },
+            },
+          ]}
+        />,
+      );
+      expect(await screen.findByAltText("post media")).toBeInTheDocument();
+      expect(screen.getByText("Processing")).toBeInTheDocument();
+    });
+
+    it("shows no processing badge when the asset is READY", async () => {
+      jest.mocked(getAssetBlobUrl).mockResolvedValue("blob:mock-url");
+      renderWithProviders(
+        <MediaGallery
+          assets={[
+            {
+              ...imageAsset,
+              asset: { ...imageAsset.asset, processingStatus: "READY" },
+            },
+          ]}
+        />,
+      );
+      expect(await screen.findByAltText("post media")).toBeInTheDocument();
+      expect(screen.queryByText("Processing")).not.toBeInTheDocument();
+    });
   });
 
   describe("FeedToolbar", () => {

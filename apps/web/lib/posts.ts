@@ -15,6 +15,7 @@ export interface FeedAsset {
   fileType: string;
   width: number | null;
   height: number | null;
+  processingStatus: "PENDING" | "READY" | "FAILED";
 }
 
 export interface FeedPostAsset {
