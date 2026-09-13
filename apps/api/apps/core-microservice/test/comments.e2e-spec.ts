@@ -149,6 +149,38 @@ describe("Comments (integration)", () => {
         }),
       );
     });
+
+    it("paginates by cursor (skip 1 offset from the cursor id)", async () => {
+      prisma.client.comment.findMany.mockResolvedValue([
+        makeCommentRow({ id: "66666666-6666-4666-8666-666666666661" }),
+        makeCommentRow({ id: "66666666-6666-4666-8666-666666666662" }),
+        makeCommentRow({ id: "66666666-6666-4666-8666-666666666663" }),
+      ]);
+      prisma.client.comment.count.mockResolvedValue(12);
+
+      const res = await request
+        .get(
+          `/posts/${POST_ID}/comments?cursor=66666666-6666-4666-8666-666666666660&take=2`,
+        )
+        .expect(200);
+
+      expect(prisma.client.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 1,
+          cursor: {
+            id: "66666666-6666-4666-8666-666666666660",
+          },
+          take: 3,
+        }),
+      );
+      expect(res.body).toMatchObject({
+        total: 12,
+        nextCursor: "66666666-6666-4666-8666-666666666662",
+        skip: 0,
+        take: 2,
+      });
+      expect(res.body.data).toHaveLength(2);
+    });
   });
 
   describe("PATCH /comments/:id", () => {

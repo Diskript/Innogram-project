@@ -1,8 +1,16 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNumber, IsOptional } from "class-validator";
+import { IsNumber, IsOptional, IsString } from "class-validator";
 import { Type } from "class-transformer";
 
 export class QueryCommentDto {
+  @ApiPropertyOptional({
+    description: "Cursor for pagination (last comment ID from previous page)",
+    example: "uuid-string",
+  })
+  @IsOptional()
+  @IsString({ message: "Cursor must be a string" })
+  cursor?: string;
+
   @ApiPropertyOptional({
     description: "Number of records to skip",
     example: 0,

@@ -68,7 +68,7 @@ export class ChatService {
   }
 
   async findUserConversations(userId: string, query: QueryConversationDto) {
-    const { skip = 0, take = 20 } = query;
+    const { cursor, skip = 0, take = 20 } = query;
 
     const participantWhere = {
       userId,
@@ -78,8 +78,8 @@ export class ChatService {
     const [participations, total] = await Promise.all([
       this.prismaService.client.conversation_Participant.findMany({
         where: participantWhere,
-        skip,
-        take,
+        take: take + 1,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : { skip }),
         orderBy: { joinedAt: "desc" },
         include: {
           conversation: {
@@ -115,16 +115,19 @@ export class ChatService {
       }),
     ]);
 
+    const hasMore = participations.length > take;
+    const items = hasMore ? participations.slice(0, take) : participations;
+
     // One grouped query replaces the per-conversation message.count calls
     // (N+1 for a list of 20 conversations). Each conversation gets its own
     // read-cutoff via the OR conditions.
     const unreadRows =
-      participations.length > 0
+      items.length > 0
         ? await this.prismaService.client.message.groupBy({
             by: ["conversationId"],
             where: {
               senderId: { not: userId },
-              OR: participations.map((p) => ({
+              OR: items.map((p) => ({
                 conversationId: p.conversation.id,
                 ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
               })),
@@ -137,12 +140,18 @@ export class ChatService {
       unreadRows.map((row) => [row.conversationId, row._count._all]),
     );
 
-    const data = participations.map((p) => ({
+    const data = items.map((p) => ({
       ...this.toConversationResponse(p.conversation),
       unreadCount: unreadByConversation.get(p.conversation.id) ?? 0,
     }));
 
-    return { data, total, skip, take };
+    return {
+      data,
+      total,
+      nextCursor: hasMore ? items[items.length - 1].id : null,
+      skip,
+      take,
+    };
   }
 
   async getConversation(conversationId: string, userId: string) {
@@ -215,15 +224,15 @@ export class ChatService {
   ) {
     await this.assertParticipant(conversationId, userId);
 
-    const { skip = 0, take = 50 } = query;
+    const { cursor, skip = 0, take = 50 } = query;
 
     const where = { conversationId };
 
     const [messages, total] = await Promise.all([
       this.prismaService.client.message.findMany({
         where,
-        skip,
-        take,
+        take: take + 1,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : { skip }),
         orderBy: { createdAt: "desc" },
         include: {
           sender: {
@@ -252,9 +261,13 @@ export class ChatService {
       this.prismaService.client.message.count({ where }),
     ]);
 
+    const hasMore = messages.length > take;
+    const items = hasMore ? messages.slice(0, take) : messages;
+
     return {
-      data: messages.map((m) => this.toMessageResponse(m)),
+      data: items.map((m) => this.toMessageResponse(m)),
       total,
+      nextCursor: hasMore ? items[items.length - 1].id : null,
       skip,
       take,
     };
