@@ -17,12 +17,26 @@ export function generateMediumName(fileName: string): string {
   return `${name}_med.${ext}`;
 }
 
+export function getStoragePath(): string;
 export function getStoragePath(
   visibility: Visibility,
   user: JwtUser,
   fileName: string,
   conversationId?: string,
+): string;
+export function getStoragePath(
+  visibility?: Visibility,
+  user?: JwtUser,
+  fileName?: string,
+  conversationId?: string,
 ): string {
+  // No-arg overload: multer staging dir (relative to the uploads root).
+  // Uploads land here from disk storage and are moved to the
+  // visibility-scoped path once the multipart body is parsed.
+  if (!visibility || !user || !fileName) {
+    return "staging/original";
+  }
+
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");

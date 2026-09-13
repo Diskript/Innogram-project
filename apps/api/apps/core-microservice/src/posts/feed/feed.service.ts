@@ -7,6 +7,13 @@ import { Prisma, Visibility } from "@repo/database";
 
 const FEED_TTL_SECONDS = 60;
 
+export interface FeedPage {
+  data: unknown[];
+  total: number;
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
 @Injectable()
 export class FeedService {
   constructor(
@@ -15,14 +22,14 @@ export class FeedService {
     private readonly redisService: RedisService,
   ) {}
 
-  async generateFeed(user: JwtUser, query: QueryFeedDto) {
+  async generateFeed(user: JwtUser, query: QueryFeedDto): Promise<FeedPage> {
     const { cursor, take = 20 } = query;
 
     // The payload embeds the requesting user's like-state (postLikes
     // filtered by userId, which the web layer maps to likedByMe), so the
     // key MUST be scoped per user, not just per page.
     const cacheKey = `feed:public:${user.userId}:${cursor ?? "start"}:${take}`;
-    const cached = await this.redisService.get(cacheKey);
+    const cached = await this.redisService.get<FeedPage>(cacheKey);
     if (cached) {
       return cached;
     }

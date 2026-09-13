@@ -220,6 +220,12 @@ model Notification {
   @@map("notifications")
 }
 
+enum ProcessingStatus {
+  PENDING
+  READY
+  FAILED
+}
+
 model Asset {
   id            String  @id @default(uuid(7))
   fileName      String  @db.VarChar(255)
@@ -240,6 +246,7 @@ model Asset {
   tags        String[]
 
   visibility Visibility @default(PRIVATE)
+  processingStatus ProcessingStatus @default(READY)
   ownerId    String
   owner      User       @relation("AssetOwner", fields: [ownerId], references: [id])
 

@@ -11,6 +11,7 @@ import { configureCoreApp } from "../../src/configure-app";
 import { JwtAuthGuard } from "../../src/auth/jwt-auth.guard";
 import { PrismaService } from "../../src/prisma/prisma.service";
 import { AmqpService } from "../../src/amqp/amqp.service";
+import { RedisService } from "../../src/cache/redis.service";
 import { createPrismaMock, type PrismaServiceMock } from "./create-prisma-mock";
 import { TEST_USER_ID } from "./fixtures";
 
@@ -59,6 +60,17 @@ export async function createTestApp() {
     .useValue(prismaMock as unknown as PrismaService)
     .overrideProvider(AmqpService)
     .useValue(amqpMock as unknown as AmqpService)
+    .overrideProvider(RedisService)
+    .useValue({
+      // No-op cache: e2e specs assert request behavior, not caching
+      // (unit specs cover the cache-aside flows); also keeps ioredis
+      // connections out of the test run entirely.
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+      delByPrefix: jest.fn().mockResolvedValue(undefined),
+      onModuleDestroy: jest.fn().mockResolvedValue(undefined),
+    })
     .overrideGuard(JwtAuthGuard)
     .useClass(TestJwtAuthGuard)
     .compile();

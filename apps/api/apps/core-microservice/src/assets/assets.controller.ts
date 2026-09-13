@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -25,8 +26,14 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { diskStorage as multerDiskStorage } from "multer";
+import { join } from "path";
+import * as fs from "fs";
 import { AssetsService } from "./assets.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { UPLOAD_ROOT } from "./file.service";
+import { isImage, isVideo } from "./utils/mime-types";
+import { generateFileName, getStoragePath } from "./utils/file-naming";
 import { Request, Response } from "express";
 import {
   CurrentUser,
@@ -35,6 +42,66 @@ import {
   UploadAssetDto,
 } from "@repo/shared-types";
 
+const MAX_FILES = 10;
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // videos dominate; images are capped per-type by FileService.validateFile
+
+type UploadCallback = (error: Error | null, acceptFile: boolean) => void;
+
+/**
+ * Builds a multer interceptor backed by disk storage: files stream
+ * straight to the staging directory (inside UPLOAD_ROOT) instead of
+ * being buffered in memory, then FileService moves them to their
+ * visibility-scoped final location.
+ */
+export const createUploadInterceptor = (
+  field: string,
+  multi = false,
+  maxBytes = MAX_UPLOAD_BYTES,
+) => {
+  const storage = multerDiskStorage({
+    destination: (
+      _req: unknown,
+      _file: unknown,
+      cb: (error: Error | null, destination: string) => void,
+    ) => {
+      // Multer only pre-creates the directory when `destination` is a
+      // string; with a callback it streams straight into the dir, so the
+      // staging tree has to exist beforehand.
+      const stagingDir = join(UPLOAD_ROOT, getStoragePath());
+      fs.mkdirSync(stagingDir, { recursive: true });
+      cb(null, stagingDir);
+    },
+    filename: (
+      _req: unknown,
+      file: { originalname: string },
+      cb: (error: Error | null, filename: string) => void,
+    ) => cb(null, generateFileName(file.originalname)),
+  });
+  const options = {
+    storage,
+    fileFilter: (
+      _req: unknown,
+      file: { mimetype: string },
+      cb: UploadCallback,
+    ) => {
+      const ok = isImage(file.mimetype) || isVideo(file.mimetype);
+      cb(ok ? null : new BadRequestException("Unsupported file type"), ok);
+    },
+    limits: { files: MAX_FILES, fileSize: maxBytes },
+  };
+  return multi
+    ? FilesInterceptor(field, MAX_FILES, options)
+    : FileInterceptor(field, options);
+};
+
+export const uploadSingle = createUploadInterceptor("file");
+export const uploadMultiple = createUploadInterceptor("files", true);
+export const uploadConversationSingle = createUploadInterceptor("file");
+export const uploadConversationMultiple = createUploadInterceptor(
+  "files",
+  true,
+);
+
 @ApiTags("Assets")
 @Controller("assets")
 @UseGuards(JwtAuthGuard)
@@ -42,7 +109,7 @@ export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 
   @Post("upload")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(uploadSingle)
   @ApiOperation({ summary: "Upload a single asset" })
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -70,7 +137,7 @@ export class AssetsController {
   }
 
   @Post("upload/multiple")
-  @UseInterceptors(FilesInterceptor("files"))
+  @UseInterceptors(uploadMultiple)
   @ApiOperation({ summary: "Upload multiple assets" })
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -101,7 +168,7 @@ export class AssetsController {
   }
 
   @Post("conversation/:conversationId")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(uploadConversationSingle)
   @ApiOperation({ summary: "Upload an asset to a conversation" })
   @ApiConsumes("multipart/form-data")
   @ApiParam({
@@ -140,7 +207,7 @@ export class AssetsController {
   }
 
   @Post("conversation/:conversationId/multiple")
-  @UseInterceptors(FilesInterceptor("files"))
+  @UseInterceptors(uploadConversationMultiple)
   @ApiOperation({ summary: "Upload multiple assets to a conversation" })
   @ApiConsumes("multipart/form-data")
   @ApiParam({

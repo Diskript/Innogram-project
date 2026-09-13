@@ -1,6 +1,8 @@
 import { createTestApp } from "./helpers/create-test-app";
 import { makeAssetRow, TEST_USER_ID } from "./helpers/fixtures";
 import { ThumbnailService } from "../src/assets/thumbnail.service";
+import { UPLOAD_ROOT } from "../src/assets/file.service";
+import * as fs from "fs/promises";
 import type { INestApplication } from "@nestjs/common";
 import type { PrismaServiceMock } from "./helpers/create-prisma-mock";
 
@@ -8,6 +10,7 @@ type TestApp = Awaited<ReturnType<typeof createTestApp>>;
 
 jest.mock("fs/promises", () => ({
   ...(jest.requireActual("fs/promises") as object),
+  rename: jest.fn(),
   mkdir: jest.fn(),
   writeFile: jest.fn(),
 }));
@@ -52,6 +55,9 @@ describe("Assets (integration)", () => {
 
   afterAll(async () => {
     await app.close();
+    // Disk-staged uploads leave real files behind (rename is mocked, so
+    // they never reach their final paths) — clean the uploads tree.
+    await fs.rm(UPLOAD_ROOT, { recursive: true, force: true });
   }, 30000);
 
   afterEach(() => {
@@ -126,10 +132,10 @@ describe("Assets (integration)", () => {
       );
     });
 
-    it("converts an unsupported file type into a server error (pre-existing catch-all)", async () => {
-      // validateFile throws BadRequest, but uploadAsset's catch-all wraps
-      // every error into InternalServerErrorException (500) — the observed
-      // behavior; flagged for the upload-optimization task.
+    it("converts an unsupported file type into a 400 from the multer filter", async () => {
+      // Task 18 moved the type check into the upload interceptor's
+      // fileFilter: unsupported types never reach the controller or the
+      // (mocked) prisma layer.
       await request
         .post("/assets/upload")
         .field("visibility", "PUBLIC")
@@ -137,7 +143,22 @@ describe("Assets (integration)", () => {
           filename: "notes.txt",
           contentType: "text/plain",
         })
-        .expect(500);
+        .expect(400);
+      expect(prisma.client.asset.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects more than 10 files in a single request with 400", async () => {
+      let req = request
+        .post("/assets/upload/multiple")
+        .field("visibility", "PUBLIC");
+      for (let i = 0; i < 11; i++) {
+        req = req.attach("files", Buffer.alloc(8, "x"), {
+          filename: `f${i}.png`,
+          contentType: "image/png",
+        });
+      }
+
+      await req.expect(400);
       expect(prisma.client.asset.create).not.toHaveBeenCalled();
     });
   });
