@@ -2,24 +2,28 @@ import {
   Injectable,
   InternalServerErrorException,
   ForbiddenException,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { FileService } from "./file.service";
 import { ThumbnailService } from "./thumbnail.service";
 import { AccessControlService } from "./access-control.service";
+import { isVideo } from "./utils/mime-types";
 import {
   JwtUser,
   UpdateAssetDto,
   UploadAssetDto,
   Visibility,
 } from "@repo/shared-types";
-import { Asset } from "@repo/database";
+import { Asset, ProcessingStatus } from "@repo/database";
 import { createReadStream, statSync } from "fs";
 import { Request, Response } from "express";
 
 @Injectable()
 export class AssetsService {
+  private readonly logger = new Logger(AssetsService.name);
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly fileService: FileService,
@@ -39,43 +43,19 @@ export class AssetsService {
         uploadAssetDto.visibility,
       );
 
-      // Declare variables in outer scope to be accessible after if/else blocks
-      let thumbnailPath: string | null = null;
-      let mediumPath: string | null = null;
-      let width: number | null = null;
-      let height: number | null = null;
-      let duration: number | null = null;
-
-      if (fileType.startsWith("image/")) {
-        const result =
-          await this.thumbnailService.generateImageThumbnail(filePath);
-
-        thumbnailPath = result.thumbnailPath;
-        mediumPath = result.mediumPath;
-        width = result.width;
-        height = result.height;
-      } else if (fileType.startsWith("video/")) {
-        const result =
-          await this.thumbnailService.generateVideoThumbnail(filePath);
-
-        thumbnailPath = result.thumbnailPath;
-        width = result.width;
-        height = result.height;
-        duration = result.duration;
-      }
-
       const asset = await this.prismaService.client.asset.create({
         data: {
           fileName,
           originalName: file.originalname,
           filePath,
-          thumbnailPath,
-          mediumPath,
           fileType,
           fileSize: file.size,
-          width,
-          height,
-          duration,
+          thumbnailPath: null,
+          mediumPath: null,
+          width: null,
+          height: null,
+          duration: null,
+          processingStatus: ProcessingStatus.PENDING,
           title: uploadAssetDto.title,
           description: uploadAssetDto.description,
           tags: uploadAssetDto.tags ?? [],
@@ -85,9 +65,11 @@ export class AssetsService {
         },
       });
 
+      this.scheduleThumbnailProcessing(asset.id, filePath, fileType);
+
       return this.mapToResponseDto(asset);
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
 
       throw new InternalServerErrorException(
         `Error while uploading the asset: ${error instanceof Error ? error.message : "Unknown erorr"}`,
@@ -136,46 +118,20 @@ export class AssetsService {
       conversationId,
     );
 
-    // Generate thumbnails
-    let thumbnailPath: string | null = null;
-    let mediumPath: string | null = null;
-    let width: number | null = null;
-    let height: number | null = null;
-    let duration: number | null = null;
-
-    try {
-      if (fileType.startsWith("image/")) {
-        const result =
-          await this.thumbnailService.generateImageThumbnail(filePath);
-        thumbnailPath = result.thumbnailPath;
-        mediumPath = result.mediumPath;
-        width = result.width;
-        height = result.height;
-      } else if (fileType.startsWith("video/")) {
-        const result =
-          await this.thumbnailService.generateVideoThumbnail(filePath);
-        thumbnailPath = result.thumbnailPath;
-        width = result.width;
-        height = result.height;
-        duration = result.duration;
-      }
-    } catch (error) {
-      console.error("Thumbnail generation failed:", error);
-    }
-
-    // Create database record
+    // Create database record — thumbnails are generated in the background
     const asset = await this.prismaService.client.asset.create({
       data: {
         fileName,
         originalName: file.originalname,
         filePath,
-        thumbnailPath,
-        mediumPath,
         fileType,
         fileSize: file.size,
-        width,
-        height,
-        duration,
+        thumbnailPath: null,
+        mediumPath: null,
+        width: null,
+        height: null,
+        duration: null,
+        processingStatus: ProcessingStatus.PENDING,
         title: dto.title,
         description: dto.description,
         tags: dto.tags ?? [],
@@ -184,6 +140,8 @@ export class AssetsService {
         createdBy: user.userId,
       },
     });
+
+    this.scheduleThumbnailProcessing(asset.id, filePath, fileType);
 
     return this.mapToResponseDto(asset);
   }
@@ -455,6 +413,7 @@ export class AssetsService {
       width: asset.width,
       height: asset.height,
       duration: asset.duration,
+      processingStatus: asset.processingStatus,
       title: asset.title,
       description: asset.description,
       visibility: asset.visibility,
@@ -467,5 +426,56 @@ export class AssetsService {
         : undefined,
       mediumUrl: asset.mediumPath ? `/assets/${asset.id}/medium` : undefined,
     };
+  }
+
+  /**
+   * Defers thumbnail/medium generation off the request path: the upload
+   * responds as soon as the file and its row are persisted, with
+   * processingStatus PENDING; processing flips the row to READY (or
+   * FAILED, with the error logged) when it finishes.
+   */
+  private scheduleThumbnailProcessing(
+    assetId: string,
+    filePath: string,
+    fileType: string,
+  ) {
+    setImmediate(() => {
+      void this.processThumbnails(assetId, filePath, fileType).catch(
+        (err: Error) =>
+          this.logger.error(
+            `Thumbnail processing failed for ${assetId}: ${err.message}`,
+          ),
+      );
+    });
+  }
+
+  private async processThumbnails(
+    assetId: string,
+    filePath: string,
+    fileType: string,
+  ) {
+    try {
+      const result = isVideo(fileType)
+        ? await this.thumbnailService.generateVideoThumbnail(filePath)
+        : await this.thumbnailService.generateImageThumbnail(filePath);
+
+      await this.prismaService.client.asset.update({
+        where: { id: assetId },
+        data: {
+          thumbnailPath: result.thumbnailPath,
+          width: result.width,
+          height: result.height,
+          ...("mediumPath" in result && { mediumPath: result.mediumPath }),
+          ...("duration" in result && { duration: result.duration }),
+          processingStatus: ProcessingStatus.READY,
+        },
+      });
+    } catch (err) {
+      await this.prismaService.client.asset.update({
+        where: { id: assetId },
+        data: { processingStatus: ProcessingStatus.FAILED },
+      });
+      throw err;
+    }
   }
 }
