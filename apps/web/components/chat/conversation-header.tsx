@@ -53,18 +53,18 @@ export function ConversationHeader({
       error instanceof ApiError &&
       (error.status === 403 || error.status === 404);
     return (
-      <div className="chat-aurora flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <h2 className="font-display text-base font-semibold">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+        <h2 className="text-base font-semibold tracking-tight">
           {notFound ? "Conversation unavailable" : "Something went wrong"}
         </h2>
-        <p className="max-w-xs text-sm text-[var(--chat-text-secondary)]">
+        <p className="max-w-xs text-sm text-muted-foreground">
           {notFound
             ? "You don't have access to this conversation, or it no longer exists."
             : "The conversation could not be loaded."}
         </p>
         <Link
           href="/chat"
-          className="rounded-lg border border-[var(--chat-border)] px-4 py-2 text-sm font-semibold hover:border-[var(--chat-border-hover)]"
+          className="flex max-lg:min-h-11 items-center rounded-lg border border-border px-4 py-2 text-sm font-semibold transition-colors hover:border-ring/40"
         >
           Back to chats
         </Link>
@@ -73,7 +73,7 @@ export function ConversationHeader({
   }
 
   if (!conversation) {
-    return <div className="border-b border-[var(--chat-border)] px-5 py-3" />;
+    return <div className="border-b border-border px-5 py-3" />;
   }
 
   const title = conversationTitle(conversation, user!.userId);
@@ -106,15 +106,15 @@ export function ConversationHeader({
   const showLamp = !conversation.isGroup;
 
   return (
-    <div className="flex items-center justify-between border-b border-[var(--chat-border)] bg-[rgba(22,18,38,0.7)] px-5 py-3">
+    <div className="flex items-center justify-between border-b border-border bg-card px-5 py-3">
       <div className="flex min-w-0 items-center gap-3">
         <div className="relative flex-shrink-0">
           {conversation.isGroup ? (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-violet)] to-[#5b4bc4]">
-              <Users className="h-4 w-4 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground">
+              <Users className="size-4" />
             </div>
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[#d97706] text-xs font-semibold text-[var(--chat-amber-ink)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
               {title
                 .split(" ")
                 .map((w) => w[0])
@@ -125,23 +125,21 @@ export function ConversationHeader({
           )}
           {showLamp && (
             <span
-              className={`presence-lamp absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--chat-list)] ${
-                online ? "bg-[var(--chat-green)]" : "bg-[#4a4364]"
+              className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card ${
+                online ? "bg-primary" : "bg-muted-foreground/40"
               }`}
             />
           )}
         </div>
         <div className="min-w-0">
-          <div className="font-display truncate text-sm font-semibold">
-            {title}
-          </div>
+          <div className="truncate text-sm font-semibold">{title}</div>
           <div
             className={`truncate text-[11px] ${
               typing.length > 0
-                ? "text-[var(--chat-amber)]"
+                ? "text-primary"
                 : showLamp && online
-                  ? "text-[var(--chat-green)]"
-                  : "text-[var(--chat-text-tertiary)]"
+                  ? "text-muted-foreground"
+                  : "text-muted-foreground"
             }`}
           >
             {typingLabel}
@@ -151,9 +149,9 @@ export function ConversationHeader({
 
       <button
         onClick={() => setPanelOpen(true)}
-        className="flex items-center gap-1.5 rounded-lg border border-[var(--chat-border)] px-2.5 py-1.5 text-xs text-[var(--chat-text-secondary)] transition-colors hover:border-[var(--chat-border-hover)] hover:text-[var(--chat-text)]"
+        className="flex max-lg:min-h-11 items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
-        <Users className="h-3.5 w-3.5" />
+        <Users className="size-3.5" />
         Members
       </button>
 

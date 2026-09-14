@@ -28,7 +28,7 @@ export function UserRow({
   onReject,
 }: UserRowProps) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-accent/50">
       <Link href={`/profile/${user.userName}`} className="shrink-0">
         <Avatar>
           {user.avatarUrl ? (
@@ -40,11 +40,13 @@ export function UserRow({
       <div className="min-w-0 flex-1">
         <Link
           href={`/profile/${user.userName}`}
-          className="block truncate text-sm font-semibold text-neutral-900 hover:underline dark:text-white"
+          className="block truncate text-sm font-semibold text-foreground hover:underline"
         >
           {user.displayName}
         </Link>
-        <p className="truncate text-xs text-neutral-500">@{user.userName}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          @{user.userName}
+        </p>
       </div>
       {showAcceptReject && onAccept && onReject ? (
         <div className="flex shrink-0 items-center gap-1">

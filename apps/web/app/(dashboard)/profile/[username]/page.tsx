@@ -49,10 +49,8 @@ function StatLink({
 }) {
   return (
     <Link href={href} className="text-center hover:opacity-80">
-      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
-        {value}
-      </p>
-      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="text-lg font-semibold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </Link>
   );
 }
@@ -167,17 +165,13 @@ export default function PublicProfilePage() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <CardTitle className="font-display">
-                {profile.displayName || profile.userName}
-              </CardTitle>
+              <CardTitle>{profile.displayName || profile.userName}</CardTitle>
               <CardDescription>@{profile.userName}</CardDescription>
             </div>
             {!isOwn ? <FollowButton userId={profile.id} /> : null}
           </div>
           {profile.bio ? (
-            <p className="text-sm text-[var(--ts-text-secondary)]">
-              {profile.bio}
-            </p>
+            <p className="text-sm text-muted-foreground">{profile.bio}</p>
           ) : null}
           {!profile.isPublic ? (
             <p className="text-xs text-muted-foreground">Private account</p>
@@ -207,7 +201,7 @@ export default function PublicProfilePage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-neutral-400" />
+                <Lock className="h-4 w-4 text-muted-foreground" />
                 <CardTitle className="text-base">
                   This account is private
                 </CardTitle>

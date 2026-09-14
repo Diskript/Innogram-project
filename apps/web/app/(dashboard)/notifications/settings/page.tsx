@@ -101,17 +101,17 @@ export default function NotificationSettingsPage() {
             Choose which notifications you want to receive
           </CardDescription>
         </CardHeader>
-        <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+        <div className="flex flex-col divide-y divide-border">
           {prefRows.map((row) => (
             <div
               key={row.key}
               className="flex items-center justify-between gap-4 px-6 py-4"
             >
               <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                <p className="text-sm font-medium text-foreground">
                   {row.title}
                 </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <p className="text-sm text-muted-foreground">
                   {row.description}
                 </p>
               </div>

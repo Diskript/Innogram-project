@@ -12,9 +12,9 @@ export function NewChatButton() {
       <button
         onClick={() => setOpen(true)}
         aria-label="New chat"
-        className="glow-soft flex h-7 w-7 items-center justify-center rounded-[9px] bg-gradient-to-br from-[var(--chat-amber-light)] to-[var(--chat-amber-deep)] font-bold text-[var(--chat-amber-ink)]"
+        className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 max-lg:size-11"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="size-4" />
       </button>
       <NewChatDialog open={open} onOpenChange={setOpen} />
     </>

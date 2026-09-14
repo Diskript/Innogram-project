@@ -17,7 +17,7 @@ function useAssetUrl(assetId: string) {
 
 function ProcessingBadge() {
   return (
-    <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-[var(--ts-bubble)] px-2 py-1 text-xs text-[var(--ts-muted)] shadow">
+    <div className="font-meta absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-xs text-muted-foreground shadow-overlay">
       <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
       <span>Processing</span>
     </div>
@@ -92,13 +92,13 @@ export function MediaGallery({ assets }: { assets: FeedPostAsset[] }) {
   if (assets.length === 1) {
     const { asset } = assets[0];
     return asset.fileType.startsWith("video/") ? (
-      <div className="mt-3 overflow-hidden rounded-lg bg-[var(--ts-bubble)]">
+      <div className="mt-3 overflow-hidden rounded-xl bg-secondary">
         <AssetFrame asset={asset}>
           <AssetVideo asset={asset} className="max-h-[480px]" />
         </AssetFrame>
       </div>
     ) : (
-      <div className="mt-3 max-h-[480px] overflow-hidden rounded-lg bg-[var(--ts-bubble)]">
+      <div className="mt-3 max-h-[480px] overflow-hidden rounded-xl bg-secondary">
         <AssetFrame asset={asset}>
           <AssetImage
             asset={asset}
@@ -115,7 +115,7 @@ export function MediaGallery({ assets }: { assets: FeedPostAsset[] }) {
         asset.fileType.startsWith("video/") ? (
           <div
             key={asset.id}
-            className="aspect-square overflow-hidden rounded-lg bg-[var(--ts-bubble)]"
+            className="aspect-square overflow-hidden rounded-xl bg-secondary"
           >
             <AssetFrame asset={asset}>
               <AssetVideo asset={asset} className="h-full w-full" />
@@ -124,7 +124,7 @@ export function MediaGallery({ assets }: { assets: FeedPostAsset[] }) {
         ) : (
           <div
             key={asset.id}
-            className="aspect-square overflow-hidden rounded-lg bg-[var(--ts-bubble)]"
+            className="aspect-square overflow-hidden rounded-xl bg-secondary"
           >
             <AssetFrame asset={asset}>
               <AssetImage asset={asset} alt="post media" />

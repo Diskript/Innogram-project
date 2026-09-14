@@ -20,7 +20,7 @@ export function MentionText({
         <Link
           key={key++}
           href={`/profile/${part}`}
-          className="text-blue-600 hover:underline dark:text-blue-400"
+          className="text-primary hover:underline"
         >
           @{part}
         </Link>,
@@ -33,7 +33,7 @@ export function MentionText({
   return (
     <p
       className={cn(
-        "whitespace-pre-wrap break-words text-sm text-neutral-800 dark:text-neutral-200",
+        "whitespace-pre-wrap break-words text-sm text-foreground/90",
         className,
       )}
     >

@@ -37,7 +37,7 @@ export default function UserFollowersPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Card className="p-6 text-sm text-neutral-500">{error}</Card>
+        <Card className="p-6 text-sm text-muted-foreground">{error}</Card>
       </div>
     );
   }

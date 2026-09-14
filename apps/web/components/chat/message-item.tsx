@@ -38,7 +38,7 @@ function AssetImage({ assetId }: { assetId: string }) {
     staleTime: Infinity,
   });
   if (!url) {
-    return <div className="h-40 w-60 animate-pulse rounded-lg bg-[#2a2350]" />;
+    return <div className="h-40 w-60 animate-pulse rounded-lg bg-secondary" />;
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element -- blob: URLs are runtime object URLs; next/image optimization does not apply
@@ -86,35 +86,38 @@ export function MessageItem({
 
   const actions = (position: "top" | "bottom") =>
     position === "top" ? (
-      <div className="hv-actions mb-1">
+      <div className="mb-1 hidden max-lg:hidden gap-1 group-hover:flex">
         {mine && (
-          <span
-            className="hv-act"
+          <button
+            type="button"
             title="Edit message"
             onClick={() => setEditing(true)}
+            className="shadow-overlay flex size-8 items-center justify-center rounded-md bg-popover text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <Pencil className="h-3.5 w-3.5" />
-          </span>
+            <Pencil className="size-3.5" />
+          </button>
         )}
-        <span
-          className="hv-act"
+        <button
+          type="button"
           title="Copy text"
           onClick={() => void copyText()}
+          className="shadow-overlay flex size-8 items-center justify-center rounded-md bg-popover text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           {copied ? (
-            <Check className="h-3.5 w-3.5" />
+            <Check className="size-3.5" />
           ) : (
-            <Copy className="h-3.5 w-3.5" />
+            <Copy className="size-3.5" />
           )}
-        </span>
+        </button>
         {mine && (
-          <span
-            className="hv-act danger"
+          <button
+            type="button"
             title="Delete message"
             onClick={() => setConfirmDelete(true)}
+            className="shadow-overlay flex size-8 items-center justify-center rounded-md bg-popover text-destructive transition-colors hover:bg-accent"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-          </span>
+            <Trash2 className="size-3.5" />
+          </button>
         )}
       </div>
     ) : null;
@@ -128,7 +131,7 @@ export function MessageItem({
       {mine && actions("top")}
       <div className="max-w-[72%]">
         {editing ? (
-          <div className="rounded-2xl border border-[rgba(240,166,60,0.55)] bg-[var(--chat-panel)] p-2">
+          <div className="rounded-xl border border-ring/50 bg-card p-2">
             <textarea
               autoFocus
               value={draft}
@@ -152,13 +155,13 @@ export function MessageItem({
                   setEditing(false);
                   setDraft(message.content);
                 }}
-                className="rounded-md px-2 py-1 text-[var(--chat-text-secondary)] hover:bg-[var(--chat-bg)]"
+                className="flex max-lg:min-h-8 items-center rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 onClick={() => void saveEdit()}
-                className="rounded-md bg-[var(--chat-amber)] px-2.5 py-1 font-semibold text-[var(--chat-amber-ink)]"
+                className="max-lg:min-h-11 rounded-md bg-primary px-2.5 py-1 font-semibold text-primary-foreground"
               >
                 Save
               </button>
@@ -166,10 +169,10 @@ export function MessageItem({
           </div>
         ) : (
           <div
-            className={`msg-hoverable relative rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed transition-all duration-150 ${
+            className={`relative rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed transition-colors duration-150 ${
               mine
-                ? "bubble-mine glow-mine rounded-br-md"
-                : "bubble-theirs rounded-bl-md"
+                ? "rounded-br-md bg-primary text-primary-foreground"
+                : "rounded-bl-md border border-border bg-secondary"
             }`}
           >
             {message.content && (
@@ -191,17 +194,15 @@ export function MessageItem({
                 key={a.id}
                 href="#"
                 onClick={(e) => e.preventDefault()}
-                className="mt-2 flex items-center gap-2 rounded-lg border border-[var(--chat-border-hover)] bg-[var(--chat-bg)] px-2.5 py-2 text-xs"
+                className="mt-2 flex items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-2 text-xs"
               >
-                <FileDown className="h-4 w-4 text-[var(--chat-violet-light)]" />
+                <FileDown className="h-4 w-4 text-muted-foreground" />
                 <span className="max-w-[160px] truncate">{a.fileName}</span>
               </a>
             ))}
             <div
-              className={`mt-1 text-right text-[10px] ${
-                mine
-                  ? "text-[rgba(36,23,3,0.55)]"
-                  : "text-[var(--chat-text-tertiary)]"
+              className={`font-meta mt-1 text-right text-[10px] ${
+                mine ? "text-primary-foreground/60" : "text-muted-foreground"
               }`}
             >
               {message.updatedAt !== message.createdAt && (
@@ -216,7 +217,7 @@ export function MessageItem({
             <div className="absolute -top-2 right-2 hidden group-hover:block">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md border border-[var(--chat-border-hover)] bg-[var(--chat-panel)] text-[var(--chat-text-secondary)]">
+                  <span className="flex size-8 items-center justify-center rounded-md border border-border bg-popover text-muted-foreground">
                     <MoreVertical className="h-3.5 w-3.5" />
                   </span>
                 </DropdownMenuTrigger>
@@ -233,7 +234,7 @@ export function MessageItem({
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-[#ff7a6e] focus:text-[#ff7a6e]"
+                        className="text-destructive focus:text-destructive"
                         onSelect={() => setConfirmDelete(true)}
                       >
                         <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete message
@@ -257,13 +258,13 @@ export function MessageItem({
               the chat.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="rounded-[10px] border-l-2 border-[var(--chat-amber)] bg-[var(--chat-bubble)] px-3 py-2 text-[12.5px]">
+          <div className="rounded-[10px] border-l-2 border-primary/40 bg-secondary px-3 py-2 text-[12.5px]">
             {message.content || "(attachment)"}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-gradient-to-br from-[#ff8a7a] to-[var(--chat-danger)] text-[#2a0b06]"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() =>
                 void deleteMessage(message.id).then(() =>
                   setConfirmDelete(false),

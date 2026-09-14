@@ -147,9 +147,9 @@ export function PostCard({
             >
               {post.creator?.displayName ?? "Unknown"}
             </Link>
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            <p className="font-meta flex items-center gap-1.5 text-xs text-muted-foreground">
               @{post.creator?.userName ?? "unknown"} · {timeAgo(post.createdAt)}{" "}
-              · <VisibilityIcon className="h-3 w-3" />
+              · <VisibilityIcon className="size-3" />
             </p>
           </div>
           {isOwn ? (
@@ -190,7 +190,7 @@ export function PostCard({
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        className="bg-destructive text-white hover:bg-destructive/90"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         onClick={() => remove()}
                       >
                         Delete
@@ -236,7 +236,7 @@ export function PostCard({
             </div>
           </div>
         ) : (
-          <div className="mt-3">
+          <div className="mt-4">
             <MentionText
               content={post.content}
               className="text-foreground/90"
@@ -246,34 +246,33 @@ export function PostCard({
 
         <MediaGallery assets={post.postsAssets} />
 
-        <div className="mt-4 flex items-center gap-1 border-t border-[var(--ts-border)] pt-3">
+        <div className="-mx-2 mt-4 flex items-center gap-1">
           <Button
             variant="ghost"
             onClick={() => toggleLike()}
-            className="gap-1.5 text-sm text-[var(--ts-text-secondary)]"
+            className="gap-1.5 text-sm text-muted-foreground hover:text-foreground max-lg:h-11"
           >
             <Heart
               className={cn(
-                "h-4 w-4",
-                post.likedByMe &&
-                  "fill-[var(--ts-danger)] text-[var(--ts-danger)]",
+                "size-4",
+                post.likedByMe && "fill-destructive text-destructive",
               )}
             />
             {post._count?.postLikes ?? 0}
           </Button>
           <Link
             href={`/posts/${post.id}`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-[var(--ts-text-secondary)] transition-colors hover:bg-accent hover:text-foreground"
+            className="inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:h-9"
           >
-            <MessageCircle className="h-4 w-4" />
+            <MessageCircle className="size-4" />
             {post._count?.comments ?? 0}
           </Link>
           <Button
             variant="ghost"
             onClick={share}
-            className="gap-1.5 text-sm text-[var(--ts-text-secondary)]"
+            className="gap-1.5 text-sm text-muted-foreground hover:text-foreground max-lg:h-11"
           >
-            <Share2 className="h-4 w-4" /> Share
+            <Share2 className="size-4" /> Share
           </Button>
         </div>
       </div>

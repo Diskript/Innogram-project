@@ -9,9 +9,9 @@ export function ChatShell({ children }: { children: ReactNode }) {
   const isThread = /^\/chat\/.+/.test(pathname);
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] overflow-hidden rounded-xl border border-[var(--chat-border)]">
+    <div className="flex h-[calc(100dvh-3.5rem-3.5rem-env(safe-area-inset-bottom))] overflow-hidden rounded-xl border border-border bg-card lg:h-[calc(100dvh-6rem)]">
       <div
-        className={`flex-col border-r border-[var(--chat-border)] bg-[var(--chat-list)] lg:flex lg:w-80 lg:flex-shrink-0 ${
+        className={`flex-col border-r border-border bg-background lg:flex lg:w-80 lg:shrink-0 ${
           isThread ? "hidden" : "flex w-full"
         }`}
       >

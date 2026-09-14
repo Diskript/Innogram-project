@@ -152,11 +152,14 @@ export function MessageComposer({
   };
 
   return (
-    <div className="px-4 pb-4 pt-1">
+    <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1">
       {sendError && (
-        <div className="mb-2 flex items-center justify-between rounded-lg border border-[rgba(232,80,60,0.4)] bg-[rgba(232,80,60,0.08)] px-3 py-1.5 text-xs text-[#ff7a6e]">
+        <div className="mb-2 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
           <span>{sendError}</span>
-          <button onClick={() => void send()} className="font-semibold">
+          <button
+            onClick={() => void send()}
+            className="font-semibold max-lg:min-h-11"
+          >
             Retry
           </button>
         </div>
@@ -167,10 +170,10 @@ export function MessageComposer({
           {attachments.map((a) => (
             <span
               key={a.id}
-              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] ${
+              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${
                 a.error
-                  ? "border-[rgba(232,80,60,0.5)] text-[#ff7a6e]"
-                  : "border-[var(--chat-border-hover)] bg-[#2a2350] text-[var(--chat-text)]"
+                  ? "border-destructive/40 text-destructive"
+                  : "border-border bg-secondary text-foreground"
               }`}
             >
               {a.fileName}
@@ -179,21 +182,22 @@ export function MessageComposer({
                   setAttachments((old) => old.filter((x) => x.id !== a.id))
                 }
                 aria-label={`Remove ${a.fileName}`}
+                className="flex size-6 items-center justify-center max-lg:size-8"
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </button>
             </span>
           ))}
         </div>
       )}
 
-      <div className="flex items-center gap-2.5 rounded-[14px] border border-[var(--chat-border)] bg-[var(--chat-panel)] px-3.5 py-2.5 transition-all focus-within:border-[rgba(240,166,60,0.55)] focus-within:shadow-[0_0_0_3px_rgba(240,166,60,0.12),0_0_28px_rgba(240,166,60,0.15)]">
+      <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 transition-colors focus-within:border-ring/50">
         <button
           onClick={pickFiles}
           aria-label="Attach files"
-          className="text-[var(--chat-text-secondary)] transition-colors hover:text-[var(--chat-amber)]"
+          className="flex size-9 items-center justify-center text-muted-foreground transition-colors hover:text-foreground max-lg:size-11"
         >
-          <Paperclip className="h-4.5 w-4.5" />
+          <Paperclip className="size-4" />
         </button>
         <input
           ref={fileRef}
@@ -217,15 +221,15 @@ export function MessageComposer({
           rows={1}
           maxLength={4000}
           placeholder="Message…"
-          className="max-h-32 min-h-6 flex-1 resize-none bg-transparent text-[13px] outline-none placeholder:text-[var(--chat-text-tertiary)]"
+          className="max-h-32 min-h-6 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
         <button
           onClick={() => void send()}
           disabled={!canSend}
           aria-label="Send"
-          className="glow-soft flex h-8 w-8 items-center justify-center rounded-[9px] bg-gradient-to-br from-[var(--chat-amber-light)] to-[var(--chat-amber-deep)] text-[var(--chat-amber-ink)] disabled:opacity-40"
+          className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40 max-lg:size-11"
         >
-          <Send className="h-4 w-4" />
+          <Send className="size-4" />
         </button>
       </div>
     </div>
