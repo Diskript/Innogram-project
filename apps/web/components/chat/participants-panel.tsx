@@ -142,9 +142,9 @@ export function ParticipantsPanel({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="border-[var(--chat-border-hover)] bg-[var(--chat-panel)] sm:max-w-md">
+        <DialogContent className="border-input bg-accent sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display">
+            <DialogTitle>
               {conversationTitle(conversation, user!.userId)} —{" "}
               {activeMembers.length} member
               {activeMembers.length === 1 ? "" : "s"}
@@ -152,13 +152,13 @@ export function ParticipantsPanel({
           </DialogHeader>
 
           {iAmAdmin && (
-            <div className="flex items-center gap-2 rounded-[11px] border border-dashed border-[var(--chat-border-hover)] bg-[var(--chat-bg)] px-3 py-2.5">
-              <Search className="h-4 w-4 text-[var(--chat-text-tertiary)]" />
+            <div className="flex items-center gap-2 rounded-[11px] border border-dashed border-input bg-background px-3 py-2.5">
+              <Search className="h-4 w-4 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Add people…"
-                className="w-full bg-transparent text-[13px] outline-none placeholder:text-[var(--chat-text-tertiary)]"
+                className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
               />
             </div>
           )}
@@ -173,19 +173,19 @@ export function ParticipantsPanel({
                     onClick={() => void add(u)}
                     className="flex w-full items-center gap-2.5 rounded-[10px] px-2 py-2 text-left hover:bg-[var(--accent)]"
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[#d97706] text-[11px] font-semibold text-[var(--chat-amber-ink)]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
                       {u.displayName.slice(0, 2).toUpperCase()}
                     </span>
                     <span className="text-[13px] font-semibold">
                       {u.displayName}
                     </span>
-                    <Plus className="ml-auto h-4 w-4 text-[var(--chat-amber)]" />
+                    <Plus className="ml-auto h-4 w-4 text-primary" />
                   </button>
                 ))}
             </div>
           )}
 
-          {error && <p className="text-xs text-[#ff7a6e]">{error}</p>}
+          {error && <p className="text-xs text-destructive">{error}</p>}
 
           <div className="max-h-64 overflow-y-auto">
             {activeMembers.map((p) => (
@@ -193,7 +193,7 @@ export function ParticipantsPanel({
                 key={p.id}
                 className="flex items-center gap-2.5 rounded-[10px] px-2 py-2"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[#d97706] text-[11px] font-semibold text-[var(--chat-amber-ink)]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
                   {p.user.displayName.slice(0, 2).toUpperCase()}
                 </span>
                 <span className="min-w-0">
@@ -201,12 +201,12 @@ export function ParticipantsPanel({
                     {p.user.displayName}
                     {p.userId === user?.userId ? " (you)" : ""}
                   </span>
-                  <span className="block truncate text-[11px] text-[var(--chat-text-tertiary)]">
+                  <span className="block truncate text-[11px] text-muted-foreground">
                     @{p.user.userName}
                   </span>
                 </span>
                 {p.role === "ADMIN" ? (
-                  <span className="ml-auto rounded-md border border-[rgba(139,124,246,0.35)] bg-[rgba(139,124,246,0.14)] px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-[var(--chat-violet-light)]">
+                  <span className="ml-auto rounded-md border border-[rgba(139,124,246,0.35)] bg-[rgba(139,124,246,0.14)] px-2 py-0.5 text-[9.5px] font-bold tracking-wide text-muted-foreground">
                     ADMIN
                   </span>
                 ) : iAmAdmin ? (
@@ -219,7 +219,7 @@ export function ParticipantsPanel({
                         avatarUrl: p.user.avatarUrl,
                       })
                     }
-                    className="ml-auto text-xs text-[#ff7a6e]"
+                    className="ml-auto text-xs text-destructive"
                   >
                     ✕ remove
                   </button>
@@ -229,7 +229,7 @@ export function ParticipantsPanel({
           </div>
 
           {soleAdmin ? (
-            <div className="flex items-start gap-2.5 rounded-[11px] border border-[rgba(240,166,60,0.3)] bg-[rgba(240,166,60,0.08)] px-3 py-2.5 text-xs text-[#f0c98a]">
+            <div className="flex items-start gap-2.5 rounded-[11px] border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs text-primary">
               <span>👑</span>
               <span>
                 You&apos;re the only admin. Promote another member to admin
@@ -241,14 +241,14 @@ export function ParticipantsPanel({
           {soleAdmin ? (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(232,80,60,0.4)] bg-[rgba(232,80,60,0.07)] py-2.5 text-[12.5px] font-semibold text-[#ff7a6e]"
+              className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(232,80,60,0.4)] bg-[rgba(232,80,60,0.07)] py-2.5 text-[12.5px] font-semibold text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete conversation
             </button>
           ) : (
             <button
               onClick={() => setConfirmLeave(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(232,80,60,0.4)] bg-[rgba(232,80,60,0.07)] py-2.5 text-[12.5px] font-semibold text-[#ff7a6e]"
+              className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(232,80,60,0.4)] bg-[rgba(232,80,60,0.07)] py-2.5 text-[12.5px] font-semibold text-destructive"
             >
               Leave conversation
             </button>
@@ -273,7 +273,7 @@ export function ParticipantsPanel({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-[var(--chat-danger)] text-white hover:bg-[#ff8a7a]"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => confirmRemove && void remove(confirmRemove.id)}
             >
               Remove
@@ -294,7 +294,7 @@ export function ParticipantsPanel({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-[var(--chat-danger)] text-white hover:bg-[#ff8a7a]"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => void leave()}
             >
               Leave conversation
@@ -318,7 +318,7 @@ export function ParticipantsPanel({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-gradient-to-br from-[#ff8a7a] to-[var(--chat-danger)] text-[#2a0b06]"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => void destroy()}
             >
               Delete conversation

@@ -82,9 +82,9 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-[var(--chat-border-hover)] bg-[var(--chat-panel)] sm:max-w-md">
+      <DialogContent className="border-input bg-accent sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display">New chat</DialogTitle>
+          <DialogTitle>New chat</DialogTitle>
         </DialogHeader>
 
         {selected.length > 0 && (
@@ -92,12 +92,12 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
             {selected.map((s) => (
               <span
                 key={s.id}
-                className="flex items-center gap-1.5 rounded-full border border-[var(--chat-border-hover)] bg-[#2a2350] px-2.5 py-1 text-[11.5px]"
+                className="flex items-center gap-1.5 rounded-full border border-input bg-secondary px-2.5 py-1 text-[11.5px]"
               >
                 {s.displayName}
                 <button
                   onClick={() => toggle(s)}
-                  className="text-[var(--chat-text-secondary)] hover:text-white"
+                  className="text-muted-foreground hover:text-foreground"
                   aria-label={`Remove ${s.displayName}`}
                 >
                   <X className="h-3 w-3" />
@@ -108,7 +108,7 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
         )}
 
         {isGroup && (
-          <div className="flex items-center gap-2 text-[11px] text-[var(--chat-violet-light)]">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <Users className="h-3.5 w-3.5" />
             <span>{selected.length} selected — this will be a group.</span>
           </div>
@@ -119,13 +119,13 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             placeholder="Group name…"
-            className="w-full rounded-[11px] border border-[var(--chat-border)] bg-[var(--chat-bg)] px-3 py-2 text-[13px] outline-none placeholder:text-[var(--chat-text-tertiary)] focus:border-[var(--chat-amber)]"
+            className="w-full rounded-[11px] border border-border bg-background px-3 py-2 text-[13px] outline-none placeholder:text-muted-foreground focus:border-ring"
           />
         )}
 
         <Command shouldFilter={false}>
-          <div className="flex items-center gap-2 rounded-[11px] border border-[var(--chat-border)] bg-[var(--chat-bg)] px-3">
-            <Search className="h-4 w-4 text-[var(--chat-text-tertiary)]" />
+          <div className="flex items-center gap-2 rounded-[11px] border border-border bg-background px-3">
+            <Search className="h-4 w-4 text-muted-foreground" />
             <CommandInput
               value={search}
               onValueChange={setSearch}
@@ -143,21 +143,21 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
                     key={u.id}
                     value={u.id}
                     onSelect={() => toggle(u)}
-                    className={`gap-2.5 ${isSelected ? "bg-[#2a2350]" : ""}`}
+                    className={`gap-2.5 ${isSelected ? "bg-secondary" : ""}`}
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[#d97706] text-[11px] font-semibold text-[var(--chat-amber-ink)]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
                       {u.displayName.slice(0, 2).toUpperCase()}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-[13px] font-semibold">
                         {u.displayName}
                       </span>
-                      <span className="block truncate text-[11px] text-[var(--chat-text-tertiary)]">
+                      <span className="block truncate text-[11px] text-muted-foreground">
                         @{u.userName}
                       </span>
                     </span>
                     {isSelected && (
-                      <Check className="ml-auto h-4 w-4 text-[var(--chat-amber)]" />
+                      <Check className="ml-auto h-4 w-4 text-primary" />
                     )}
                   </CommandItem>
                 );
@@ -166,12 +166,12 @@ export function NewChatDialog({ open, onOpenChange }: NewChatDialogProps) {
           </CommandList>
         </Command>
 
-        {error && <p className="text-xs text-[#ff7a6e]">{error}</p>}
+        {error && <p className="text-xs text-destructive">{error}</p>}
 
         <button
           onClick={() => void create()}
           disabled={selected.length === 0 || creating}
-          className="glow-soft mt-1 flex w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-br from-[var(--chat-amber-light)] to-[var(--chat-amber-deep)] py-2 text-[13px] font-bold text-[var(--chat-amber-ink)] disabled:opacity-40"
+          className="mt-1 flex max-lg:min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
         >
           {creating && <Loader2 className="h-4 w-4 animate-spin" />}
           {isGroup ? "Create group chat" : "Start chat"}
