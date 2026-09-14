@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { fireEvent } from "@testing-library/react";
 
 import "@/test/mocks/contexts";
 import { mockAuth, mockChat, mockNotifications } from "@/test/mocks/contexts";
 import { mockNextNavigation } from "@/test/mocks/navigation";
 import { USER_ID } from "@/test/factories";
 import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { AuthLayout } from "@/components/layout/auth-layout";
 
@@ -40,9 +40,9 @@ describe("layout components", () => {
       mockNextNavigation("/chat");
       render(<Sidebar />);
       const chatLink = screen.getByRole("link", { name: /Chat/ });
-      expect(chatLink).toHaveClass("airmail-active");
+      expect(chatLink).toHaveAttribute("aria-current", "page");
       const feedLink = screen.getByRole("link", { name: /Feed/ });
-      expect(feedLink).not.toHaveClass("airmail-active");
+      expect(feedLink).not.toHaveAttribute("aria-current");
     });
 
     it("shows unread badges for chat and notifications", () => {
@@ -60,21 +60,16 @@ describe("layout components", () => {
       mockAuth.user = { userId: USER_ID, email: "user@test.local" };
       render(<Sidebar />);
       expect(screen.getByText("user@test.local")).toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: /Log out/ }));
+      const trigger = screen.getByRole("button", { name: "Account menu" });
+      fireEvent.keyDown(trigger, { key: "Enter" });
+      const item = await screen.findByRole("menuitem", { name: /Log out/ });
+      fireEvent.click(item);
       expect(mockAuth.logout).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("Header", () => {
-    it("shows the signed-in user email", () => {
-      mockAuth.user = { userId: USER_ID, email: "header@test.local" };
-      render(<Header />);
-      expect(screen.getByText("header@test.local")).toBeInTheDocument();
-    });
-  });
-
   describe("DashboardLayout", () => {
-    it("renders sidebar, header and children", () => {
+    it("renders sidebar, mobile top bar and children", () => {
       mockNextNavigation("/");
       mockAuth.user = { userId: USER_ID, email: "user@test.local" };
       const { container } = render(
@@ -83,20 +78,9 @@ describe("layout components", () => {
         </DashboardLayout>,
       );
       expect(screen.getByText("page content")).toBeInTheDocument();
-      expect(container.querySelectorAll("header")).toHaveLength(1);
-      expect(screen.getByText("Innogram")).toBeInTheDocument();
-    });
-
-    it("hides the header when showHeader is false", () => {
-      mockNextNavigation("/");
-      mockAuth.user = { userId: USER_ID, email: "user@test.local" };
-      const { container } = render(
-        <DashboardLayout showHeader={false}>
-          <p>page content</p>
-        </DashboardLayout>,
-      );
-      expect(screen.getByText("page content")).toBeInTheDocument();
-      expect(container.querySelector("header")).toBeNull();
+      expect(screen.getAllByText("Innogram").length).toBeGreaterThan(0);
+      expect(container.querySelector("aside")).not.toBeNull();
+      expect(container.querySelector("header")).not.toBeNull();
     });
   });
 

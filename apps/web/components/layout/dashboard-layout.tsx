@@ -1,20 +1,16 @@
 import { type ReactNode } from "react";
 import { Sidebar } from "./sidebar";
-import { Header } from "./header";
+import { MobileTopBar } from "./mobile-top-bar";
 
-export function DashboardLayout({
-  children,
-  showHeader = true,
-}: {
-  children: ReactNode;
-  showHeader?: boolean;
-}) {
+export function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <Sidebar />
-      <div className="flex flex-1 flex-col">
-        {showHeader && <Header />}
-        <main className="flex-1 p-6">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileTopBar />
+        <main className="min-w-0 flex-1 overflow-x-hidden p-4 md:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );
