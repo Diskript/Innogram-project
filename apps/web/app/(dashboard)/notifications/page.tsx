@@ -77,13 +77,13 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white">
+        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Bell className="h-5 w-5" /> Notifications
         </h1>
         <div className="flex items-center gap-2">
           <Link
             href="/notifications/settings"
-            className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+            className="text-sm text-muted-foreground hover:text-foreground"
           >
             Notification settings
           </Link>
@@ -125,7 +125,7 @@ export default function NotificationsPage() {
             <div
               key={item.id}
               className={cn(
-                "flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950",
+                "flex items-center gap-3 rounded-xl border border-border bg-card p-3",
                 !item.read &&
                   "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
               )}
@@ -142,14 +142,14 @@ export default function NotificationsPage() {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-neutral-800 dark:text-neutral-200">
+                <p className="truncate text-sm text-foreground">
                   <span className="font-semibold">
                     {item.actor.displayName}
                   </span>{" "}
                   {typeLabel[item.type] ??
                     `sent a ${item.type.toLowerCase()} notification`}
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted-foreground">
                   {timeAgo(item.createdAt)}
                 </p>
               </div>

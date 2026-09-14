@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { fireEvent } from "@testing-library/react";
 
 import "@/test/mocks/contexts";
@@ -56,7 +55,6 @@ describe("layout components", () => {
 
     it("shows the signed-in user email and logs out", async () => {
       mockNextNavigation("/");
-      const user = userEvent.setup();
       mockAuth.user = { userId: USER_ID, email: "user@test.local" };
       render(<Sidebar />);
       expect(screen.getByText("user@test.local")).toBeInTheDocument();
