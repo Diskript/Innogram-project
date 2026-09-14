@@ -42,11 +42,11 @@ export function ConversationHeader({
     ) ?? true;
 
   useEffect(() => {
-    if (conversation && !isMember) {
+    if (conversation && user && !isMember) {
       setActiveConversationId(null);
       router.replace("/chat");
     }
-  }, [conversation, isMember, router, setActiveConversationId]);
+  }, [conversation, user, isMember, router, setActiveConversationId]);
 
   if (isError) {
     const notFound =
