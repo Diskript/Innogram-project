@@ -8,6 +8,53 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+export interface RefreshedTokens {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
+let refreshInFlight: Promise<RefreshedTokens | null> | null = null;
+
+/**
+ * Single-flight refresh-token rotation. The auth service keeps ONE refresh
+ * token per user in Redis and rotates it on every refresh — two concurrent
+ * refresh calls with the same token make the loser 401 and kill the session
+ * (React StrictMode double-mounts the restore effect in dev). All callers
+ * share one in-flight promise.
+ */
+export function refreshSession(): Promise<RefreshedTokens | null> {
+  if (refreshInFlight) return refreshInFlight;
+  const promise = (async () => {
+    const refreshTokenValue = localStorage.getItem("refreshToken");
+    if (!refreshTokenValue) return null;
+    try {
+      const authUrl =
+        process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
+      const res = await fetch(`${authUrl}/jwt-auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: refreshTokenValue }),
+      });
+      if (!res.ok) {
+        localStorage.removeItem("refreshToken");
+        setAccessToken(null);
+        return null;
+      }
+      const data: RefreshedTokens = await res.json();
+      setAccessToken(data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      return data;
+    } catch {
+      return null;
+    }
+  })();
+  refreshInFlight = promise.finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -133,29 +180,7 @@ export class ApiClient {
   }
 
   private async attemptRefresh(): Promise<boolean> {
-    const refreshTokenValue = localStorage.getItem("refreshToken");
-    if (!refreshTokenValue) return false;
-
-    try {
-      const authUrl =
-        process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
-      const res = await fetch(`${authUrl}/jwt-auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: refreshTokenValue }),
-      });
-      if (!res.ok) {
-        localStorage.removeItem("refreshToken");
-        setAccessToken(null);
-        return false;
-      }
-      const data = await res.json();
-      setAccessToken(data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      return true;
-    } catch {
-      return false;
-    }
+    return (await refreshSession()) !== null;
   }
 }
 

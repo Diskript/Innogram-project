@@ -220,8 +220,8 @@ describe("CommentsService", () => {
 
       expect(mockCommentFindMany).toHaveBeenCalledWith({
         where: { postId: "post-1", parentCommentId: null },
+        take: 11,
         skip: 0,
-        take: 10,
         include: {
           user: {
             select: {
@@ -250,6 +250,74 @@ describe("CommentsService", () => {
       });
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
+      expect(result.nextCursor).toBeNull();
+      expect(result.skip).toBe(0);
+      expect(result.take).toBe(10);
+    });
+
+    it("passes the cursor through as a skip-1 offset page", async () => {
+      mockCommentFindMany.mockResolvedValue([
+        { id: "c1", content: "1", user: {}, childComments: [], _count: {} },
+        {
+          id: "c2",
+          content: "2",
+          user: {},
+          childComments: [],
+          _count: { commentLikes: 0 },
+        },
+        {
+          id: "c3",
+          content: "3",
+          user: {},
+          childComments: [],
+          _count: { commentLikes: 0 },
+        },
+      ]);
+      mockCommentCount.mockResolvedValue(30);
+
+      const result = await service.findByPost("post-1", {
+        cursor: "c0",
+        take: 2,
+      });
+
+      expect(mockCommentFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 1,
+          cursor: { id: "c0" },
+          take: 3,
+        }),
+      );
+      expect(result.data.map((c: { id: string }) => c.id)).toEqual([
+        "c1",
+        "c2",
+      ]);
+      expect(result.nextCursor).toBe("c2");
+    });
+
+    it("returns a null nextCursor on the last page", async () => {
+      mockCommentFindMany.mockResolvedValue([
+        {
+          id: "c1",
+          content: "1",
+          user: {},
+          childComments: [],
+          _count: { commentLikes: 0 },
+        },
+        {
+          id: "c2",
+          content: "2",
+          user: {},
+          childComments: [],
+          _count: { commentLikes: 0 },
+        },
+      ]);
+      mockCommentCount.mockResolvedValue(2);
+
+      const result = await service.findByPost("post-1", { take: 2 });
+
+      expect(result.nextCursor).toBeNull();
+      expect(result.skip).toBe(0);
+      expect(result.take).toBe(2);
     });
   });
 

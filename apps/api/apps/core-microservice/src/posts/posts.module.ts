@@ -7,6 +7,7 @@ import { ArchiveModule } from "./archive/archive.module";
 import { LikesModule } from "./likes/likes.module";
 import { CommentsModule } from "./comments/comments.module";
 import { MentionsModule } from "../mentions/mentions.module";
+import { CacheModule } from "../cache/cache.module";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MentionsModule } from "../mentions/mentions.module";
     LikesModule,
     CommentsModule,
     MentionsModule,
+    CacheModule,
   ],
   controllers: [PostsController],
   providers: [PostsService],

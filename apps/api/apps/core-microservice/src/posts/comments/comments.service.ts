@@ -77,15 +77,15 @@ export class CommentsService {
   }
 
   async findByPost(postId: string, query: QueryCommentDto) {
-    const { skip = 0, take = 10 } = query;
+    const { cursor, skip = 0, take = 10 } = query;
 
     const where = { postId, parentCommentId: null };
 
     const [comments, total] = await Promise.all([
       this.prismaService.client.comment.findMany({
         where,
-        skip,
-        take,
+        take: take + 1,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : { skip }),
         include: {
           user: {
             select: {
@@ -117,7 +117,16 @@ export class CommentsService {
       this.prismaService.client.comment.count({ where }),
     ]);
 
-    return { data: comments, total, skip, take };
+    const hasMore = comments.length > take;
+    const items = hasMore ? comments.slice(0, take) : comments;
+
+    return {
+      data: items,
+      total,
+      nextCursor: hasMore ? items[items.length - 1].id : null,
+      skip,
+      take,
+    };
   }
 
   async update(commentId: string, userId: string, content: string) {

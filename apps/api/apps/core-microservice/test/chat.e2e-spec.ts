@@ -7,6 +7,7 @@ import {
 import type { Server } from "http";
 import request from "supertest";
 import { CoreMicroserviceModule } from "../src/core-microservice.module";
+import { configureCoreApp } from "../src/configure-app";
 import { JwtAuthGuard } from "../src/auth/jwt-auth.guard";
 import { PrismaService } from "../src/prisma/prisma.service";
 
@@ -36,6 +37,7 @@ describe("Chat lifecycle (e2e)", () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    configureCoreApp(app);
     await app.init();
     http = app.getHttpServer();
     prisma = app.get(PrismaService);
@@ -98,6 +100,46 @@ describe("Chat lifecycle (e2e)", () => {
         `/chat/conversations/${conversationId}/participants/${OTHER_USER_B}`,
       )
       .expect(200);
+
+    await request(http)
+      .delete(`/chat/conversations/${conversationId}`)
+      .expect(200);
+  });
+
+  it("paginates messages by cursor", async () => {
+    const create = await request(http)
+      .post("/chat/conversations")
+      .send({ participantIds: [OTHER_USER_A] })
+      .expect(201);
+    const conversationId = create.body.id as string;
+
+    for (const content of ["m1", "m2", "m3", "m4", "m5"]) {
+      await request(http)
+        .post(`/chat/conversations/${conversationId}/messages`)
+        .send({ content })
+        .expect(201);
+    }
+
+    const page1 = await request(http)
+      .get(`/chat/conversations/${conversationId}/messages?take=2`)
+      .expect(200);
+    expect(page1.body.data).toHaveLength(2);
+    const cursor1 = page1.body.nextCursor as string;
+    expect(cursor1).toBeTruthy();
+    // cursor = last id of the previous (desc-ordered) page
+    expect(cursor1).toBe(page1.body.data[1].id);
+
+    const page2 = await request(http)
+      .get(
+        `/chat/conversations/${conversationId}/messages?take=2&cursor=${cursor1}`,
+      )
+      .expect(200);
+    expect(page2.body.data).toHaveLength(2);
+
+    const ids1 = page1.body.data.map((m: { id: string }) => m.id);
+    const ids2 = page2.body.data.map((m: { id: string }) => m.id);
+    expect(ids2.some((id: string) => ids1.includes(id))).toBe(false);
+    expect(page2.body.total).toBe(page1.body.total);
 
     await request(http)
       .delete(`/chat/conversations/${conversationId}`)

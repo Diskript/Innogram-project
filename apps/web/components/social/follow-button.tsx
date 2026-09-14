@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, UserX, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui-kit/button";
 import { getFollowStatus, toggleFollow } from "@/lib/social";
 
 export function FollowButton({ userId }: { userId: string }) {
@@ -33,11 +33,7 @@ export function FollowButton({ userId }: { userId: string }) {
 
   if (status === "following") {
     return (
-      <Button
-        variant="secondary"
-        isLoading={isPending}
-        onClick={() => mutate()}
-      >
+      <Button variant="secondary" disabled={isPending} onClick={() => mutate()}>
         <UserX className="h-4 w-4" /> Unfollow
       </Button>
     );
@@ -52,7 +48,7 @@ export function FollowButton({ userId }: { userId: string }) {
   }
 
   return (
-    <Button isLoading={isPending} onClick={() => mutate()}>
+    <Button disabled={isPending} onClick={() => mutate()}>
       <UserPlus className="h-4 w-4" /> Follow
     </Button>
   );

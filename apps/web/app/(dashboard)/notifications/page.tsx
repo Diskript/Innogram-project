@@ -13,11 +13,21 @@ import {
   markNotificationRead,
   type NotificationItem,
 } from "@/lib/notifications";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
-import { timeAgo, cn } from "@/lib/utils";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui-kit/avatar";
+import { Button } from "@/components/ui-kit/button";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui-kit/empty";
+import { timeAgo, cn, initials } from "@/lib/utils";
 
 const typeLabel: Record<string, string> = {
   FOLLOW: "started following you",
@@ -67,19 +77,19 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white">
+        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Bell className="h-5 w-5" /> Notifications
         </h1>
         <div className="flex items-center gap-2">
           <Link
             href="/notifications/settings"
-            className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+            className="text-sm text-muted-foreground hover:text-foreground"
           >
             Notification settings
           </Link>
           <Button
             variant="secondary"
-            isLoading={markingAll}
+            disabled={markingAll}
             onClick={() => markAll()}
           >
             Mark all read
@@ -95,11 +105,17 @@ export default function NotificationsPage() {
       ) : null}
 
       {!query.isLoading && items.length === 0 ? (
-        <EmptyState
-          icon={Bell}
-          title="No notifications"
-          description="Likes, comments, follows, and mentions will show up here."
-        />
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Bell />
+            </EmptyMedia>
+            <EmptyTitle>No notifications</EmptyTitle>
+            <EmptyDescription>
+              Likes, comments, follows, and mentions will show up here.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : null}
 
       <div className="flex flex-col gap-2">
@@ -109,25 +125,31 @@ export default function NotificationsPage() {
             <div
               key={item.id}
               className={cn(
-                "flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950",
+                "flex items-center gap-3 rounded-xl border border-border bg-card p-3",
                 !item.read &&
                   "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
               )}
             >
-              <Avatar
-                size="md"
-                src={item.actor.avatarUrl}
-                alt={item.actor.displayName}
-              />
+              <Avatar>
+                {item.actor.avatarUrl ? (
+                  <AvatarImage
+                    src={item.actor.avatarUrl}
+                    alt={item.actor.displayName}
+                  />
+                ) : null}
+                <AvatarFallback>
+                  {initials(item.actor.displayName)}
+                </AvatarFallback>
+              </Avatar>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-neutral-800 dark:text-neutral-200">
+                <p className="truncate text-sm text-foreground">
                   <span className="font-semibold">
                     {item.actor.displayName}
                   </span>{" "}
                   {typeLabel[item.type] ??
                     `sent a ${item.type.toLowerCase()} notification`}
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted-foreground">
                   {timeAgo(item.createdAt)}
                 </p>
               </div>
@@ -156,7 +178,7 @@ export default function NotificationsPage() {
         <div className="flex justify-center">
           <Button
             variant="secondary"
-            isLoading={query.isFetchingNextPage}
+            disabled={query.isFetchingNextPage}
             onClick={() => query.fetchNextPage()}
           >
             Load more

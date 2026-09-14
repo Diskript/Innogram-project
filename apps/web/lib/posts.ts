@@ -15,6 +15,7 @@ export interface FeedAsset {
   fileType: string;
   width: number | null;
   height: number | null;
+  processingStatus: "PENDING" | "READY" | "FAILED";
 }
 
 export interface FeedPostAsset {
@@ -111,6 +112,7 @@ export interface CommentItem {
 export interface CommentsResponse {
   data: CommentItem[];
   total: number;
+  nextCursor: string | null;
   skip: number;
   take: number;
 }
@@ -229,10 +231,13 @@ export function uploadAssets(
 
 export function getComments(
   postId: string,
-  skip = 0,
-  take = 50,
+  opts?: { cursor?: string; take?: number },
 ): Promise<CommentsResponse> {
-  const params = { skip: String(skip), take: String(take) };
+  const params: Record<string, string> = {
+    skip: "0",
+    take: String(opts?.take ?? 50),
+  };
+  if (opts?.cursor) params.cursor = opts.cursor;
   return api.get<CommentsResponse>(`/posts/${postId}/comments`, params);
 }
 

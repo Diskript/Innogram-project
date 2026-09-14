@@ -73,4 +73,141 @@ describe("AssetsService", () => {
   it("should be defined", () => {
     expect(service).toBeDefined();
   });
+
+  describe("background thumbnail processing", () => {
+    const file = {
+      originalname: "photo.png",
+      mimetype: "image/png",
+      size: 100,
+      path: "/staging/staged.png",
+    } as unknown as Express.Multer.File;
+
+    const user = { userId: "user-1", email: "a@b.c" };
+
+    const dto = { visibility: "PUBLIC", tags: [] } as never;
+
+    const assetRow = {
+      id: "asset-1",
+      fileName: "f.png",
+      originalName: "photo.png",
+      filePath: "public/users/user-1/original/f.png",
+      fileType: "image/png",
+      fileSize: 100,
+      processingStatus: "PENDING",
+      visibility: "PUBLIC",
+    };
+
+    it("persists PENDING, responds immediately, and defers thumbnail work", async () => {
+      jest.useFakeTimers();
+      try {
+        mockFileService.saveFile.mockResolvedValue({
+          fileType: "image/png",
+          filePath: assetRow.filePath,
+          fileName: "f.png",
+        });
+        // Thumbnail work that would take "forever" if awaited.
+        mockThumbnailService.generateImageThumbnail.mockReturnValue(
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  thumbnailPath: "t.png",
+                  mediumPath: "m.png",
+                  width: 10,
+                  height: 20,
+                }),
+              1000,
+            ),
+          ),
+        );
+        mockPrismaService.client.asset.create.mockResolvedValue(assetRow);
+
+        const response = await service.uploadAsset(file, user, dto);
+
+        // Row persisted as PENDING with no thumbnail data yet.
+        expect(mockPrismaService.client.asset.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            processingStatus: "PENDING",
+            thumbnailPath: null,
+            mediumPath: null,
+          }),
+        });
+        // The upload response resolves without waiting on thumbnails.
+        expect(response).toMatchObject({ id: "asset-1" });
+        // Deferral: nothing processed yet (the immediate hasn't fired).
+        expect(mockPrismaService.client.asset.update).not.toHaveBeenCalled();
+
+        await jest.runAllTimersAsync();
+
+        // Only after flushing the event loop does processing run.
+        expect(mockThumbnailService.generateImageThumbnail).toHaveBeenCalled();
+        expect(mockPrismaService.client.asset.update).toHaveBeenCalledWith({
+          where: { id: "asset-1" },
+          data: expect.objectContaining({ processingStatus: "READY" }),
+        });
+      } finally {
+        await jest.runAllTimersAsync();
+        jest.useRealTimers();
+      }
+    });
+
+    it("marks the row READY with thumbnail data once processing completes", async () => {
+      jest.useFakeTimers();
+      try {
+        mockFileService.saveFile.mockResolvedValue({
+          fileType: "image/png",
+          filePath: assetRow.filePath,
+          fileName: "f.png",
+        });
+        mockThumbnailService.generateImageThumbnail.mockResolvedValue({
+          thumbnailPath: "t.png",
+          mediumPath: "m.png",
+          width: 10,
+          height: 20,
+        });
+        mockPrismaService.client.asset.create.mockResolvedValue(assetRow);
+
+        await service.uploadAsset(file, user, dto);
+        await jest.runAllTimersAsync();
+
+        expect(mockPrismaService.client.asset.update).toHaveBeenCalledWith({
+          where: { id: "asset-1" },
+          data: expect.objectContaining({
+            thumbnailPath: "t.png",
+            mediumPath: "m.png",
+            width: 10,
+            height: 20,
+            processingStatus: "READY",
+          }),
+        });
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it("marks the row FAILED and logs when thumbnail generation throws", async () => {
+      jest.useFakeTimers();
+      try {
+        mockFileService.saveFile.mockResolvedValue({
+          fileType: "image/png",
+          filePath: assetRow.filePath,
+          fileName: "f.png",
+        });
+        mockThumbnailService.generateImageThumbnail.mockRejectedValue(
+          new Error("boom"),
+        );
+        mockPrismaService.client.asset.create.mockResolvedValue(assetRow);
+
+        await service.uploadAsset(file, user, dto);
+        await jest.runAllTimersAsync();
+
+        expect(mockPrismaService.client.asset.update).toHaveBeenCalledWith({
+          where: { id: "asset-1" },
+          data: { processingStatus: "FAILED" },
+        });
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
 });

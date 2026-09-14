@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { UserListPage } from "@/components/social/user-list-page";
 import { getPublicProfile } from "@/lib/api-client";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui-kit/card";
+import { Skeleton } from "@/components/ui-kit/skeleton";
 
 export default function UserFollowersPage() {
   const params = useParams<{ username: string }>();
@@ -37,7 +37,7 @@ export default function UserFollowersPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Card className="p-6 text-sm text-neutral-500">{error}</Card>
+        <Card className="p-6 text-sm text-muted-foreground">{error}</Card>
       </div>
     );
   }

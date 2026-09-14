@@ -14,14 +14,16 @@ export class NotificationConsumer implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    await this.amqpService.setupQueue(
-      "notification.direct",
-      "notification.deliver",
-      "#",
-      "notification.dlx",
-    );
-    await this.amqpService.consume("notification.deliver", async (msg) => {
-      await this.handleNotification(msg);
+    this.amqpService.registerTopology(async () => {
+      await this.amqpService.setupQueue(
+        "notification.direct",
+        "notification.deliver",
+        "#",
+        "notification.dlx",
+      );
+      await this.amqpService.consume("notification.deliver", async (msg) => {
+        await this.handleNotification(msg);
+      });
     });
   }
 

@@ -62,6 +62,94 @@ jobs:
       - name: Run type check
         run: pnpm check-types
 
+  test:
+    name: Test & Coverage
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-alpine
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: innogram_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: innogram
+          RABBITMQ_DEFAULT_PASS: innogram_password
+        ports: ["5672:5672"]
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/innogram_test
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://innogram:innogram_password@rabbitmq:5672
+    steps:
+      - name: Install system dependencies
+        run: apk add --no-cache libc6-compat openssl git bash
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # No actions/setup-node here: the node:20-alpine image already provides a
+      # musl-native Node 20. setup-node downloads a glibc build which crashes on
+      # Alpine ("fcntl64: symbol not found").
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Clean build caches
+        run: rm -f packages/shared-types/tsconfig.tsbuildinfo packages/database/tsconfig.tsbuildinfo
+
+      - name: Build shared-types
+        run: pnpm --filter @repo/shared-types build
+
+      - name: Build database
+        run: pnpm --filter @repo/database build
+
+      - name: Apply database migrations
+        run: pnpm --filter @repo/database exec prisma migrate deploy
+
+      - name: Run unit tests with coverage
+        run: pnpm -r --if-present test:cov
+
+      - name: Run core integration (e2e) tests
+        run: pnpm --filter @repo/api-core test:e2e
+
+      - name: Run auth integration (e2e) tests
+        run: pnpm --filter @repo/api-auth test:e2e
+
+      - name: Upload core coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-core
+          path: apps/api/apps/core-microservice/coverage/
+
+      - name: Upload auth coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-auth
+          path: apps/api/apps/auth-microservice/coverage/
+
+      - name: Upload web coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web
+          path: apps/web/coverage/
+
   build:
     name: Build
     runs-on: ubuntu-latest

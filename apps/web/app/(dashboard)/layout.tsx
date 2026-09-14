@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui-kit/spinner";
 
 export default function DashboardGroupLayout({
   children,
@@ -23,7 +23,7 @@ export default function DashboardGroupLayout({
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
+        <Spinner className="size-8" />
       </div>
     );
   }

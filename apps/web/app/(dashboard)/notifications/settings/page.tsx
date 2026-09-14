@@ -7,10 +7,16 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+} from "@/components/ui-kit/card";
+import { Switch } from "@/components/ui-kit/switch";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui-kit/empty";
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -73,11 +79,15 @@ export default function NotificationSettingsPage() {
   if (!data) {
     return (
       <div className="mx-auto max-w-2xl">
-        <EmptyState
-          icon={BellOff}
-          title="Preferences unavailable"
-          description="Try reloading the page."
-        />
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BellOff />
+            </EmptyMedia>
+            <EmptyTitle>Preferences unavailable</EmptyTitle>
+            <EmptyDescription>Try reloading the page.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     );
   }
@@ -91,17 +101,17 @@ export default function NotificationSettingsPage() {
             Choose which notifications you want to receive
           </CardDescription>
         </CardHeader>
-        <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+        <div className="flex flex-col divide-y divide-border">
           {prefRows.map((row) => (
             <div
               key={row.key}
               className="flex items-center justify-between gap-4 px-6 py-4"
             >
               <div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                <p className="text-sm font-medium text-foreground">
                   {row.title}
                 </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <p className="text-sm text-muted-foreground">
                   {row.description}
                 </p>
               </div>

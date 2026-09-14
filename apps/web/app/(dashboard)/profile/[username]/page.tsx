@@ -10,14 +10,25 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
-import { Spinner } from "@/components/ui/spinner";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+} from "@/components/ui-kit/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui-kit/avatar";
+import { Spinner } from "@/components/ui-kit/spinner";
+import { Button } from "@/components/ui-kit/button";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui-kit/empty";
 import { PostCard } from "@/components/posts/post-card";
 import { FollowButton } from "@/components/social/follow-button";
+import { initials } from "@/lib/utils";
 import {
   ApiError,
   getPublicProfile,
@@ -38,10 +49,8 @@ function StatLink({
 }) {
   return (
     <Link href={href} className="text-center hover:opacity-80">
-      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
-        {value}
-      </p>
-      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="text-lg font-semibold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </Link>
   );
 }
@@ -121,7 +130,7 @@ export default function PublicProfilePage() {
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
+        <Spinner className="size-8" />
       </div>
     );
   }
@@ -141,14 +150,20 @@ export default function PublicProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Card noPadding>
-        <div className="flex flex-col gap-4 p-6">
+      <Card>
+        <CardHeader>
           <div className="flex items-center gap-4">
-            <Avatar
-              size="lg"
-              src={profile.avatarUrl}
-              alt={profile.displayName || profile.userName}
-            />
+            <Avatar className="h-16 w-16">
+              {profile.avatarUrl && (
+                <AvatarImage
+                  src={profile.avatarUrl}
+                  alt={profile.displayName}
+                />
+              )}
+              <AvatarFallback className="text-lg">
+                {initials(profile.displayName || profile.userName)}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
               <CardTitle>{profile.displayName || profile.userName}</CardTitle>
               <CardDescription>@{profile.userName}</CardDescription>
@@ -156,9 +171,10 @@ export default function PublicProfilePage() {
             {!isOwn ? <FollowButton userId={profile.id} /> : null}
           </div>
           {profile.bio ? (
-            <p className="text-sm text-neutral-600 dark:text-neutral-300">
-              {profile.bio}
-            </p>
+            <p className="text-sm text-muted-foreground">{profile.bio}</p>
+          ) : null}
+          {!profile.isPublic ? (
+            <p className="text-xs text-muted-foreground">Private account</p>
           ) : null}
           <div className="flex items-center gap-6">
             <StatLink
@@ -177,7 +193,7 @@ export default function PublicProfilePage() {
               href={`/profile/${profile.userName}/following`}
             />
           </div>
-        </div>
+        </CardHeader>
       </Card>
 
       {showPrivatePanel ? (
@@ -185,7 +201,7 @@ export default function PublicProfilePage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-neutral-400" />
+                <Lock className="h-4 w-4 text-muted-foreground" />
                 <CardTitle className="text-base">
                   This account is private
                 </CardTitle>
@@ -202,11 +218,17 @@ export default function PublicProfilePage() {
         {posts.isLoading ? <Skeleton className="h-40 w-full" /> : null}
         {!posts.isLoading &&
         (posts.data?.pages.flatMap((p) => p.data).length ?? 0) === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No posts"
-            description="This user hasn't posted anything yet."
-          />
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Users />
+              </EmptyMedia>
+              <EmptyTitle>No posts</EmptyTitle>
+              <EmptyDescription>
+                This user hasn&apos;t posted anything yet.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           posts.data?.pages
             .flatMap((p) => p.data)
@@ -223,7 +245,7 @@ export default function PublicProfilePage() {
           <div className="flex justify-center">
             <Button
               variant="secondary"
-              isLoading={posts.isFetchingNextPage}
+              disabled={posts.isFetchingNextPage}
               onClick={() => posts.fetchNextPage()}
             >
               Load more

@@ -7,6 +7,14 @@ module.exports = {
   },
   collectCoverageFrom: ["**/*.(t|j)s"],
   coverageDirectory: "../coverage",
+  coverageThreshold: {
+    global: {
+      statements: 48,
+      branches: 53,
+      functions: 44,
+      lines: 48,
+    },
+  },
   testEnvironment: "node",
   moduleNameMapper: {
     "^@repo/shared-types$":

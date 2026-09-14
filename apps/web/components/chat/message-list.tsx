@@ -19,20 +19,22 @@ export function MessageList({ conversationId }: { conversationId: string }) {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: ["chat", "messages", conversationId],
-      initialPageParam: undefined as number | undefined,
+      initialPageParam: undefined as string | undefined,
       queryFn: async ({ pageParam }) => {
         if (pageParam === undefined) {
+          // Newest window: compute its offset from the head count (the
+          // API walks createdAt DESC, so "skip" still selects the tail).
           const head = await getMessages(conversationId, { skip: 0, take: 1 });
           const skip = Math.max(head.total - PAGE_SIZE, 0);
           return getMessages(conversationId, { skip, take: PAGE_SIZE });
         }
+        // Older pages walk the keyset cursor.
         return getMessages(conversationId, {
-          skip: pageParam,
+          cursor: pageParam,
           take: PAGE_SIZE,
         });
       },
-      getNextPageParam: (lastPage) =>
-        lastPage.skip > 0 ? Math.max(lastPage.skip - PAGE_SIZE, 0) : undefined,
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     });
 
   const ascending = useMemo(() => {
@@ -103,7 +105,7 @@ export function MessageList({ conversationId }: { conversationId: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-[var(--chat-text-tertiary)]">
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Loading messages…
       </div>
     );
@@ -114,15 +116,20 @@ export function MessageList({ conversationId }: { conversationId: string }) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="chat-aurora h-full overflow-y-auto px-5 py-4"
+        className="h-full overflow-y-auto px-5 py-4"
       >
         {hasNextPage && (
-          <div className="pb-3 text-center text-[11px] text-[var(--chat-text-tertiary)]">
-            {isFetchingNextPage ? "Loading history…" : ""}
-          </div>
+          <button
+            data-testid="load-older"
+            disabled={isFetchingNextPage}
+            onClick={() => void fetchNextPage()}
+            className="block w-full pb-3 text-center text-[11px] text-muted-foreground"
+          >
+            {isFetchingNextPage ? "Loading history…" : "Load older messages"}
+          </button>
         )}
         {ascending.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-[var(--chat-text-tertiary)]">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No messages yet. Say hi!
           </div>
         ) : (
@@ -136,7 +143,7 @@ export function MessageList({ conversationId }: { conversationId: string }) {
               <div key={message.id}>
                 {showDate && (
                   <div className="my-3 flex justify-center">
-                    <span className="rounded-full border border-[var(--chat-border)] bg-[var(--chat-list)] px-3 py-1 text-[10.5px] tracking-wide text-[var(--chat-text-tertiary)]">
+                    <span className="font-meta rounded-full border border-border bg-secondary px-3 py-1 text-[10.5px] tracking-wide text-muted-foreground">
                       {new Date(message.createdAt).toLocaleDateString(
                         undefined,
                         { month: "short", day: "numeric", year: "numeric" },
@@ -166,7 +173,7 @@ export function MessageList({ conversationId }: { conversationId: string }) {
             nearBottomRef.current = true;
             scrollToBottom();
           }}
-          className="glow-soft absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[var(--chat-amber-deep)] px-3 py-1.5 text-xs font-semibold text-[var(--chat-amber-ink)]"
+          className="shadow-overlay font-meta absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
         >
           <ArrowDown className="h-3.5 w-3.5" /> New messages
         </button>

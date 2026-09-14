@@ -9,9 +9,15 @@ import {
   type FollowUser,
 } from "@/lib/social";
 import { UserRow } from "@/components/social/user-row";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui-kit/button";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui-kit/empty";
 
 type Mode = "followers" | "following";
 
@@ -44,17 +50,23 @@ function List({ userId, mode }: { userId: string; mode: Mode }) {
 
   if (users.length === 0) {
     return (
-      <EmptyState
-        icon={Users}
-        title={
-          mode === "followers" ? "No followers yet" : "Not following anyone yet"
-        }
-        description={
-          mode === "followers"
-            ? "People who follow this user will appear here."
-            : "People this user follows will appear here."
-        }
-      />
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Users />
+          </EmptyMedia>
+          <EmptyTitle>
+            {mode === "followers"
+              ? "No followers yet"
+              : "Not following anyone yet"}
+          </EmptyTitle>
+          <EmptyDescription>
+            {mode === "followers"
+              ? "People who follow this user will appear here."
+              : "People this user follows will appear here."}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -69,7 +81,7 @@ function List({ userId, mode }: { userId: string; mode: Mode }) {
         <div className="flex justify-center">
           <Button
             variant="secondary"
-            isLoading={query.isFetchingNextPage}
+            disabled={query.isFetchingNextPage}
             onClick={() => query.fetchNextPage()}
           >
             Load more
@@ -91,13 +103,13 @@ export function UserListPage({
 }) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">
         {mode === "followers" ? "Followers" : "Following"}
         {username ? (
-          <span className="ml-2 text-sm font-normal text-neutral-500">
+          <span className="font-meta ml-2 text-sm font-normal text-muted-foreground">
             <Link
               href={`/profile/${username}`}
-              className="hover:text-neutral-900 dark:hover:text-white"
+              className="hover:text-foreground"
             >
               @{username}
             </Link>

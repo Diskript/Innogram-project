@@ -1,15 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Heart, MessageCircle, Pencil, Trash2, Reply } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui-kit/avatar";
+import { Button } from "@/components/ui-kit/button";
+import { Spinner } from "@/components/ui-kit/spinner";
+import { Skeleton } from "@/components/ui-kit/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui-kit/empty";
 import { MentionText } from "@/components/social/mention-text";
 import { MentionInput } from "@/components/social/mention-input";
-import { timeAgo, cn } from "@/lib/utils";
+import { timeAgo, initials, cn } from "@/lib/utils";
 import {
   getComments,
   createComment,
@@ -32,10 +47,19 @@ export function CommentsSection({ postId }: { postId: string }) {
     {},
   );
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["comments", postId],
-    queryFn: () => getComments(postId),
-  });
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["comments", postId],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam }) =>
+        getComments(postId, pageParam ? { cursor: pageParam } : undefined),
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    });
+
+  const comments = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
 
   const invalidateComments = () =>
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -89,14 +113,20 @@ export function CommentsSection({ postId }: { postId: string }) {
     const liked = likedComments[comment.id] ?? false;
     return (
       <div key={comment.id} className={cn("flex gap-3", isReply && "ml-10")}>
-        <Avatar
-          size="sm"
-          src={comment.user.avatarUrl}
-          alt={comment.user.displayName}
-        />
+        <Avatar className="h-8 w-8">
+          {comment.user.avatarUrl && (
+            <AvatarImage
+              src={comment.user.avatarUrl}
+              alt={comment.user.displayName}
+            />
+          )}
+          <AvatarFallback className="text-xs">
+            {initials(comment.user.displayName)}
+          </AvatarFallback>
+        </Avatar>
         <div className="min-w-0 flex-1">
-          <div className="rounded-xl rounded-tl-none bg-neutral-100 px-3 py-2 dark:bg-neutral-800">
-            <p className="text-xs font-semibold text-neutral-900 dark:text-white">
+          <div className="rounded-xl rounded-tl-none border border-border bg-secondary px-3 py-2">
+            <p className="text-xs font-semibold text-foreground">
               {comment.user.displayName}
             </p>
             {editingId === comment.id ? (
@@ -114,10 +144,10 @@ export function CommentsSection({ postId }: { postId: string }) {
                     Cancel
                   </Button>
                   <Button
-                    isLoading={savingEdit}
-                    disabled={!editDraft.trim()}
+                    disabled={savingEdit || !editDraft.trim()}
                     onClick={() => saveEdit()}
                   >
+                    {savingEdit && <Spinner className="size-4" />}
                     Save
                   </Button>
                 </div>
@@ -128,23 +158,23 @@ export function CommentsSection({ postId }: { postId: string }) {
               </div>
             )}
           </div>
-          <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500">
+          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             <span>{timeAgo(comment.createdAt)}</span>
             <button
-              className="flex items-center gap-1 hover:text-neutral-900 dark:hover:text-white"
+              className="flex items-center gap-1 hover:text-foreground"
               onClick={() => toggleLike(comment.id)}
             >
               <Heart
                 className={cn(
                   "h-3.5 w-3.5",
-                  liked && "fill-red-500 text-red-500",
+                  liked && "fill-destructive text-destructive",
                 )}
               />
               {comment._count?.commentLikes ?? 0}
             </button>
             {!isReply ? (
               <button
-                className="flex items-center gap-1 hover:text-neutral-900 dark:hover:text-white"
+                className="flex items-center gap-1 hover:text-foreground"
                 onClick={() => {
                   setReplyTarget(
                     replyTarget?.id === comment.id ? null : comment,
@@ -158,7 +188,7 @@ export function CommentsSection({ postId }: { postId: string }) {
             {isOwn ? (
               <>
                 <button
-                  className="hover:text-neutral-900 dark:hover:text-white"
+                  className="hover:text-foreground"
                   onClick={() => {
                     setEditingId(comment.id);
                     setEditDraft(comment.content);
@@ -168,7 +198,7 @@ export function CommentsSection({ postId }: { postId: string }) {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  className="hover:text-red-600"
+                  className="hover:text-destructive"
                   onClick={() => remove(comment.id)}
                   aria-label="Delete comment"
                 >
@@ -187,10 +217,10 @@ export function CommentsSection({ postId }: { postId: string }) {
               />
               <div className="flex gap-2">
                 <Button
-                  isLoading={adding}
-                  disabled={!draft.trim()}
+                  disabled={adding || !draft.trim()}
                   onClick={() => add()}
                 >
+                  {adding && <Spinner className="size-4" />}
                   Reply
                 </Button>
                 <Button
@@ -214,7 +244,7 @@ export function CommentsSection({ postId }: { postId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-white">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <MessageCircle className="h-4 w-4" /> Comments
       </h2>
       <div className="flex flex-col gap-2">
@@ -227,22 +257,38 @@ export function CommentsSection({ postId }: { postId: string }) {
         />
         <div className="flex justify-end">
           <Button
-            isLoading={addingTop}
-            disabled={!topDraft.trim()}
+            disabled={addingTop || !topDraft.trim()}
             onClick={() => addTop()}
           >
             Comment
           </Button>
         </div>
       </div>
-      {(data?.data.length ?? 0) === 0 ? (
-        <EmptyState
-          title="No comments yet"
-          description="Be the first to share your thoughts."
-        />
+      {comments.length === 0 && !isLoading ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MessageCircle />
+            </EmptyMedia>
+            <EmptyTitle>No comments yet</EmptyTitle>
+            <EmptyDescription>
+              Be the first to share your thoughts.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-4">
-          {(data?.data ?? []).map((c) => renderComment(c))}
+          {comments.map((c) => renderComment(c))}
+          {hasNextPage && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isFetchingNextPage}
+              onClick={() => void fetchNextPage()}
+            >
+              Load more
+            </Button>
+          )}
         </div>
       )}
     </div>

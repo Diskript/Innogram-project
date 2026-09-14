@@ -14,12 +14,14 @@ import {
 } from "@repo/shared-types";
 import { Prisma } from "@repo/database";
 import { MentionsService } from "../mentions/mentions.service";
+import { RedisService } from "../cache/redis.service";
 
 @Injectable()
 export class PostsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly mentionsService: MentionsService,
+    private readonly redisService: RedisService,
   ) {}
 
   async create(createPostDto: CreatePostDto) {
@@ -59,6 +61,8 @@ export class PostsService {
       post.id,
       content,
     );
+
+    await this.redisService.delByPrefix("feed:public:");
 
     return post;
   }
@@ -224,7 +228,7 @@ export class PostsService {
       throw new ForbiddenException("You can only update your own posts");
     }
 
-    return this.prismaService.client.post.update({
+    const updated = await this.prismaService.client.post.update({
       where: { id },
       data: {
         ...updatePostDto,
@@ -241,6 +245,10 @@ export class PostsService {
         },
       },
     });
+
+    await this.redisService.delByPrefix("feed:public:");
+
+    return updated;
   }
 
   async remove(id: string, userId: string) {
@@ -256,8 +264,12 @@ export class PostsService {
       throw new ForbiddenException("You can only delete your own posts");
     }
 
-    return this.prismaService.client.post.delete({
+    const removed = await this.prismaService.client.post.delete({
       where: { id },
     });
+
+    await this.redisService.delByPrefix("feed:public:");
+
+    return removed;
   }
 }

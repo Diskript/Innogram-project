@@ -1,15 +1,19 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { MoreHorizontal, Users } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/chat-ui/dropdown-menu";
+} from "@/components/ui-kit/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/chat-ui/alert-dialog";
+} from "@/components/ui-kit/alert-dialog";
 import {
   deleteConversation,
   getConversations,
@@ -59,26 +63,38 @@ export function ConversationList() {
     null,
   );
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["chat", "conversations"],
-    queryFn: () => getConversations({ skip: 0, take: 50 }),
-  });
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["chat", "conversations"],
+      initialPageParam: undefined as string | undefined,
+      queryFn: ({ pageParam }) =>
+        getConversations(
+          pageParam ? { cursor: pageParam, take: 50 } : { take: 50 },
+        ),
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    });
 
-  const conversations = data?.data ?? [];
+  const conversations = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data],
+  );
 
   const handleMarkRead = async (id: string) => {
     await markConversationRead(id);
-    queryClient.setQueryData<{ data: ChatConversation[] }>(
-      ["chat", "conversations"],
-      (old) =>
-        old
-          ? {
-              ...old,
-              data: old.data.map((c) =>
+    queryClient.setQueryData<
+      InfiniteData<{ data: ChatConversation[]; nextCursor: string | null }>
+    >(["chat", "conversations"], (old) =>
+      old
+        ? {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((c) =>
                 c.id === id ? { ...c, unreadCount: 0 } : c,
               ),
-            }
-          : old,
+            })),
+          }
+        : old,
     );
   };
 
@@ -102,108 +118,121 @@ export function ConversationList() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-4 pb-2 pt-4">
-        <h1 className="font-display text-base font-bold">Chats</h1>
+        <h1 className="font-display text-base font-semibold tracking-tight">
+          Chats
+        </h1>
         <NewChatButton />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="px-4 py-8 text-center text-sm text-[var(--chat-text-tertiary)]">
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
             Loading…
           </div>
         ) : conversations.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-[var(--chat-text-tertiary)]">
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
             No conversations yet. Start one with New chat.
           </div>
         ) : (
-          conversations.map((conversation) => {
-            const active = pathname === `/chat/${conversation.id}`;
-            const title = conversationTitle(conversation, user!.userId);
-            const initials = title
-              .split(" ")
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase();
-            const preview = conversation.lastMessage
-              ? `${
-                  conversation.lastMessage.senderId === user?.userId
-                    ? "You: "
-                    : ""
-                }${conversation.lastMessage.content}`
-              : "No messages yet";
+          <>
+            {conversations.map((conversation) => {
+              const active = pathname === `/chat/${conversation.id}`;
+              const title = conversationTitle(conversation, user!.userId);
+              const initials = title
+                .split(" ")
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
+              const preview = conversation.lastMessage
+                ? `${
+                    conversation.lastMessage.senderId === user?.userId
+                      ? "You: "
+                      : ""
+                  }${conversation.lastMessage.content}`
+                : "No messages yet";
 
-            return (
-              <button
-                key={conversation.id}
-                onClick={() => router.push(`/chat/${conversation.id}`)}
-                className={`flex w-full items-center gap-3 border-b border-[var(--chat-border)] px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--chat-panel)] ${
-                  active ? "airmail-active" : ""
-                }`}
-              >
-                <div className="relative flex-shrink-0">
-                  {conversation.isGroup ? (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-violet)] to-[#5b4bc4]">
-                      <Users className="h-4 w-4 text-white" />
-                    </div>
-                  ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[#d97706] text-xs font-semibold text-[var(--chat-amber-ink)]">
-                      {initials}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] font-semibold">
-                    {title}
-                  </div>
-                  <div className="truncate text-[11.5px] text-[var(--chat-text-secondary)]">
-                    {preview}
-                  </div>
-                </div>
-                {(conversation.unreadCount || 0) > 0 && (
-                  <span className="glow-soft flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-[var(--chat-amber-light)] to-[var(--chat-amber-deep)] px-1.5 text-[10px] font-bold text-[var(--chat-amber-ink)]">
-                    {conversation.unreadCount > 99
-                      ? "99+"
-                      : conversation.unreadCount}
-                  </span>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => e.stopPropagation()}
-                      className="rounded-md p-1 text-[var(--chat-text-tertiary)] hover:bg-[var(--chat-panel)] hover:text-[var(--chat-text)]"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </span>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44">
-                    <DropdownMenuItem
-                      onClick={() => void handleMarkRead(conversation.id)}
-                    >
-                      Mark as read
-                    </DropdownMenuItem>
-                    {isActiveAdminOnly(conversation, user!.userId) ? (
-                      <DropdownMenuItem
-                        className="text-[#ff7a6e] focus:text-[#ff7a6e]"
-                        onClick={() => setPendingDelete(conversation)}
-                      >
-                        Delete conversation
-                      </DropdownMenuItem>
+              return (
+                <button
+                  key={conversation.id}
+                  onClick={() => router.push(`/chat/${conversation.id}`)}
+                  className={`flex w-full items-center gap-3 border-b border-border px-3.5 py-2.5 text-left transition-colors hover:bg-accent ${
+                    active ? "bg-accent" : ""
+                  }`}
+                >
+                  <div className="relative flex-shrink-0">
+                    {conversation.isGroup ? (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground">
+                        <Users className="size-4" />
+                      </div>
                     ) : (
-                      <DropdownMenuItem
-                        className="text-[#ff7a6e] focus:text-[#ff7a6e]"
-                        onClick={() => void handleLeave(conversation)}
-                      >
-                        Leave conversation
-                      </DropdownMenuItem>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                        {initials}
+                      </div>
                     )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-semibold">
+                      {title}
+                    </div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {preview}
+                    </div>
+                  </div>
+                  {(conversation.unreadCount || 0) > 0 && (
+                    <span className="font-meta flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-medium tabular-nums text-primary-foreground">
+                      {conversation.unreadCount > 99
+                        ? "99+"
+                        : conversation.unreadCount}
+                    </span>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground max-lg:size-11"
+                      >
+                        <MoreHorizontal className="size-4" />
+                      </span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem
+                        onClick={() => void handleMarkRead(conversation.id)}
+                      >
+                        Mark as read
+                      </DropdownMenuItem>
+                      {isActiveAdminOnly(conversation, user!.userId) ? (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setPendingDelete(conversation)}
+                        >
+                          Delete conversation
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => void handleLeave(conversation)}
+                        >
+                          Leave conversation
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </button>
+              );
+            })}
+            {hasNextPage && (
+              <button
+                disabled={isFetchingNextPage}
+                onClick={() => void fetchNextPage()}
+                className="flex max-lg:min-h-11 w-full items-center justify-center border-b border-border px-3.5 py-2.5 text-center text-xs text-muted-foreground transition-colors hover:bg-accent"
+              >
+                Load more
               </button>
-            );
-          })
+            )}
+          </>
         )}
       </div>
 
@@ -229,7 +258,7 @@ export function ConversationList() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => pendingDelete && void handleDelete(pendingDelete)}
-              className="bg-[var(--chat-danger)] text-white hover:bg-[#ff8a7a]"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete conversation
             </AlertDialogAction>

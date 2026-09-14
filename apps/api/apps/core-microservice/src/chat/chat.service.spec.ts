@@ -27,6 +27,7 @@ describe("ChatService", () => {
       update: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
+      groupBy: jest.fn(),
     },
   };
 
@@ -123,13 +124,52 @@ describe("ChatService", () => {
         { conversation: mockConversation },
       ]);
       mockPrisma.conversation_Participant.count.mockResolvedValue(1);
+      mockPrisma.message.groupBy.mockResolvedValue([]);
 
       const result = await service.findUserConversations("user-1", {});
 
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
+      expect(result.nextCursor).toBeNull();
+      expect(mockPrisma.conversation_Participant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0, take: 21 }),
+      );
+    });
+
+    it("passes the cursor through as a skip-1 offset page", async () => {
+      mockPrisma.conversation_Participant.findMany.mockResolvedValue([
+        { id: "p-1", conversation: convFixture("conv-1"), lastReadAt: null },
+        { id: "p-2", conversation: convFixture("conv-2"), lastReadAt: null },
+        { id: "p-3", conversation: convFixture("conv-3"), lastReadAt: null },
+      ]);
+      mockPrisma.conversation_Participant.count.mockResolvedValue(5);
+      mockPrisma.message.groupBy.mockResolvedValue([]);
+
+      const result = await service.findUserConversations("user-1", {
+        cursor: "conv-0",
+        take: 2,
+      });
+
+      expect(mockPrisma.conversation_Participant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 1, cursor: { id: "conv-0" }, take: 3 }),
+      );
+      expect(result.data).toHaveLength(2);
+      expect(result.nextCursor).toBe("p-2");
+      expect(result.total).toBe(5);
     });
   });
+
+  function convFixture(id: string) {
+    return {
+      id,
+      name: null,
+      isGroup: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      participants: [],
+      messages: [],
+    };
+  }
 
   describe("sendMessage", () => {
     it("should create a message", async () => {
@@ -273,6 +313,34 @@ describe("ChatService", () => {
       const result = await service.getMessages("conv-1", "user-1", {});
       expect(result.data).toEqual([]);
       expect(result.total).toBe(0);
+      expect(result.nextCursor).toBeNull();
+    });
+
+    it("passes the cursor through as a skip-1 offset page", async () => {
+      mockPrisma.conversation_Participant.findUnique.mockResolvedValue({
+        leftAt: null,
+      });
+      mockPrisma.message.findMany.mockResolvedValue([
+        { id: "m1", content: "hi" },
+        { id: "m2", content: "yo" },
+        { id: "m3", content: "sup" },
+      ]);
+      mockPrisma.message.count.mockResolvedValue(30);
+
+      const result = await service.getMessages("conv-1", "user-1", {
+        cursor: "m0",
+        take: 2,
+      });
+
+      expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 1,
+          cursor: { id: "m0" },
+          take: 3,
+        }),
+      );
+      expect(result.data).toHaveLength(2);
+      expect(result.nextCursor).toBe("m2");
     });
   });
 
@@ -300,16 +368,24 @@ describe("ChatService", () => {
         baseParticipation(new Date("2026-08-01T00:00:00Z")),
       ]);
       mockPrisma.conversation_Participant.count.mockResolvedValue(1);
-      mockPrisma.message.count.mockResolvedValue(3);
+      mockPrisma.message.groupBy.mockResolvedValue([
+        { conversationId: "conv-1", _count: { _all: 3 } },
+      ]);
 
       const result = await service.findUserConversations("user-1", {});
 
-      expect(mockPrisma.message.count).toHaveBeenCalledWith({
+      expect(mockPrisma.message.groupBy).toHaveBeenCalledWith({
+        by: ["conversationId"],
         where: {
-          conversationId: "conv-1",
           senderId: { not: "user-1" },
-          createdAt: { gt: new Date("2026-08-01T00:00:00Z") },
+          OR: [
+            {
+              conversationId: "conv-1",
+              createdAt: { gt: new Date("2026-08-01T00:00:00Z") },
+            },
+          ],
         },
+        _count: { _all: true },
       });
       expect(result.data[0].unreadCount).toBe(3);
     });
@@ -319,12 +395,19 @@ describe("ChatService", () => {
         baseParticipation(null),
       ]);
       mockPrisma.conversation_Participant.count.mockResolvedValue(1);
-      mockPrisma.message.count.mockResolvedValue(5);
+      mockPrisma.message.groupBy.mockResolvedValue([
+        { conversationId: "conv-1", _count: { _all: 5 } },
+      ]);
 
       const result = await service.findUserConversations("user-1", {});
 
-      expect(mockPrisma.message.count).toHaveBeenCalledWith({
-        where: { conversationId: "conv-1", senderId: { not: "user-1" } },
+      expect(mockPrisma.message.groupBy).toHaveBeenCalledWith({
+        by: ["conversationId"],
+        where: {
+          senderId: { not: "user-1" },
+          OR: [{ conversationId: "conv-1" }],
+        },
+        _count: { _all: true },
       });
       expect(result.data[0].unreadCount).toBe(5);
     });

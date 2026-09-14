@@ -13,7 +13,7 @@ import {
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useSocket } from "@/contexts/socket-context";
 import { useAuth } from "@/contexts/auth-context";
-import { markConversationRead } from "@/lib/chat";
+import { mapConversationPages, markConversationRead } from "@/lib/chat";
 import type { ChatConversation, ChatMessage } from "@/lib/chat";
 
 type MessagesPage = {
@@ -73,19 +73,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const bumpUnread = useCallback(
     (conversationId: string) => {
-      queryClient.setQueryData<{ data: ChatConversation[] }>(
-        ["chat", "conversations"],
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            data: old.data.map((c) =>
-              c.id === conversationId
-                ? { ...c, unreadCount: (c.unreadCount || 0) + 1 }
-                : c,
-            ),
-          };
-        },
+      queryClient.setQueryData<
+        InfiniteData<{ data: ChatConversation[]; nextCursor: string | null }>
+      >(["chat", "conversations"], (old) =>
+        old
+          ? {
+              ...old,
+              pages: mapConversationPages(old.pages, (c) =>
+                c.id === conversationId
+                  ? { ...c, unreadCount: (c.unreadCount || 0) + 1 }
+                  : c,
+              ),
+            }
+          : old,
       );
       recomputeTotalUnread();
     },
@@ -94,17 +94,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const zeroUnread = useCallback(
     (conversationId: string) => {
-      queryClient.setQueryData<{ data: ChatConversation[] }>(
-        ["chat", "conversations"],
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            data: old.data.map((c) =>
-              c.id === conversationId ? { ...c, unreadCount: 0 } : c,
-            ),
-          };
-        },
+      queryClient.setQueryData<
+        InfiniteData<{ data: ChatConversation[]; nextCursor: string | null }>
+      >(["chat", "conversations"], (old) =>
+        old
+          ? {
+              ...old,
+              pages: mapConversationPages(old.pages, (c) =>
+                c.id === conversationId ? { ...c, unreadCount: 0 } : c,
+              ),
+            }
+          : old,
       );
       recomputeTotalUnread();
     },
@@ -221,19 +221,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       upsertMessage(payload.message);
 
-      queryClient.setQueryData<{ data: ChatConversation[] }>(
-        ["chat", "conversations"],
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            data: [...old.data].sort((a, b) =>
-              (b.lastMessage?.createdAt ?? b.updatedAt).localeCompare(
-                a.lastMessage?.createdAt ?? a.updatedAt,
-              ),
-            ),
-          };
-        },
+      queryClient.setQueryData<
+        InfiniteData<{ data: ChatConversation[]; nextCursor: string | null }>
+      >(["chat", "conversations"], (old) =>
+        old
+          ? {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                data: [...page.data].sort((a, b) =>
+                  (b.lastMessage?.createdAt ?? b.updatedAt).localeCompare(
+                    a.lastMessage?.createdAt ?? a.updatedAt,
+                  ),
+                ),
+              })),
+            }
+          : old,
       );
       queryClient.setQueryData<ChatConversation>(
         ["chat", "conversation", payload.conversationId],

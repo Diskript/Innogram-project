@@ -15,6 +15,10 @@ node_modules
 # Testing
 coverage
 
+# Local uploads (api dev/test)
+apps/api/apps/core-microservice/src/uploads
+apps/api/apps/core-microservice/dist/uploads
+
 # Turbo
 .turbo
 
@@ -43,6 +47,7 @@ yarn-error.log*
 .vscode
 
 plans
+docs/
 tsconfig.tsbuildinfo
 ASSET_MANAGEMENT_IMPLEMENTATION_PLAN.md
 session.json

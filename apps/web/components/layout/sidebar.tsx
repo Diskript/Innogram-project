@@ -2,21 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import {
+  Bell,
+  ChevronUp,
+  Home,
+  LogOut,
+  MessageCircle,
+  Search,
+  Settings,
+  User,
+  Zap,
+} from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui-kit/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui-kit/dropdown-menu";
+import { cn, initials } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { useChat } from "@/contexts/chat-context";
 import { useNotifications } from "@/contexts/notifications-context";
-import {
-  Home,
-  User,
-  Settings,
-  LogOut,
-  Search,
-  MessageCircle,
-  Bell,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 
 const navItems = [
   { href: "/", label: "Feed", icon: Home },
@@ -27,6 +36,14 @@ const navItems = [
   { href: "/profile/settings", label: "Settings", icon: Settings },
 ];
 
+function NavBadge({ count }: { count: number }) {
+  return (
+    <span className="font-meta ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-medium tabular-nums text-primary-foreground">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -34,14 +51,23 @@ export function Sidebar() {
   const { unreadCount } = useNotifications();
 
   return (
-    <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
+    <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-background px-3 py-4 lg:flex">
       <Link
         href="/"
-        className="mb-8 text-xl font-bold text-neutral-900 dark:text-white"
+        className="flex h-14 items-center gap-2.5 rounded-lg px-2 transition-colors hover:bg-accent"
       >
-        Innogram
+        <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <Zap className="size-3.5" />
+        </span>
+        <span className="font-display text-[15px] font-semibold tracking-tight">
+          Innogram
+        </span>
       </Link>
-      <nav className="flex flex-col gap-1">
+
+      <p className="font-meta mb-2 mt-6 px-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+        Menu
+      </p>
+      <nav className="flex flex-col gap-1" aria-label="Main navigation">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -52,44 +78,60 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex h-9 max-lg:h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                 isActive
-                  ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white"
-                  : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white",
+                  ? "bg-white/[0.07] text-foreground"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon
+                className={cn(
+                  "size-4",
+                  isActive ? "text-primary" : "text-muted-foreground",
+                )}
+              />
               {item.label}
               {item.href === "/chat" && totalUnread > 0 && (
-                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-neutral-900 px-1.5 text-[10px] font-bold text-white dark:bg-white dark:text-neutral-900">
-                  {totalUnread > 99 ? "99+" : totalUnread}
-                </span>
+                <NavBadge count={totalUnread} />
               )}
-              {item.href === "/notifications" && unreadCount > 0 ? (
-                <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              ) : null}
+              {item.href === "/notifications" && unreadCount > 0 && (
+                <NavBadge count={unreadCount} />
+              )}
             </Link>
           );
         })}
       </nav>
-      <div className="mt-auto border-t border-neutral-200 pt-4 dark:border-neutral-800">
-        <div className="mb-3 flex items-center gap-3 px-3">
-          <Avatar size="sm" alt={user?.email || ""} />
-          <span className="truncate text-sm font-medium text-neutral-900 dark:text-white">
-            {user?.email}
-          </span>
-        </div>
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3"
-          onClick={logout}
-        >
-          <LogOut className="h-5 w-5" />
-          Log out
-        </Button>
+
+      <div className="mt-auto border-t border-border pt-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="group flex w-full items-center gap-2.5 rounded-lg p-2 text-left transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              aria-label="Account menu"
+            >
+              <Avatar className="size-7">
+                <AvatarFallback className="text-xs">
+                  {initials(user?.email)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                {user?.email}
+              </span>
+              <ChevronUp className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-56">
+            <DropdownMenuLabel className="font-meta text-xs font-normal text-muted-foreground">
+              {user?.email}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={logout}>
+              <LogOut className="size-4" /> Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );

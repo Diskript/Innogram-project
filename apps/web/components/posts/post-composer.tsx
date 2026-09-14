@@ -3,9 +3,16 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, X } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Card } from "@/components/ui-kit/card";
+import { Button } from "@/components/ui-kit/button";
+import { Spinner } from "@/components/ui-kit/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui-kit/select";
 import { MentionInput } from "@/components/social/mention-input";
 import { createPost, uploadAssets } from "@/lib/posts";
 
@@ -73,85 +80,82 @@ export function PostComposer({ queryKey }: { queryKey: string[] }) {
     (content.trim().length > 0 || pending.length > 0) && !posting;
 
   return (
-    <Card>
-      <div className="flex flex-col gap-3">
-        <MentionInput
-          value={content}
-          onChange={setContent}
-          rows={3}
-          placeholder="Share something with the community..."
-          maxLength={1000}
-        />
-        {pending.length > 0 ? (
-          <div className="grid grid-cols-4 gap-2">
-            {pending.map((p) => {
-              const isVideo = p.file.type.startsWith("video/");
-              return (
-                <div
-                  key={p.localId}
-                  className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-900"
+    <Card className="gap-4 p-4">
+      <MentionInput
+        value={content}
+        onChange={setContent}
+        rows={3}
+        placeholder="What's happening?"
+        maxLength={1000}
+      />
+      {pending.length > 0 ? (
+        <div className="grid grid-cols-4 gap-2">
+          {pending.map((p) => {
+            const isVideo = p.file.type.startsWith("video/");
+            return (
+              <div
+                key={p.localId}
+                className="relative aspect-square overflow-hidden rounded-lg bg-secondary"
+              >
+                {isVideo ? (
+                  <video
+                    src={p.previewUrl}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.previewUrl}
+                    alt="preview"
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => removePending(p.localId)}
+                  className="absolute right-1 top-1 flex size-8 items-center justify-center rounded-full bg-black/60 text-white max-lg:size-11"
+                  aria-label="Remove file"
                 >
-                  {isVideo ? (
-                    <video
-                      src={p.previewUrl}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.previewUrl}
-                      alt="preview"
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removePending(p.localId)}
-                    className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
-                    aria-label="Remove file"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach media"
-            >
-              <ImagePlus className="h-5 w-5" />
-            </Button>
-            <Select
-              value={visibility}
-              onChange={setVisibility}
-              options={[
-                { value: "PUBLIC", label: "Public" },
-                { value: "FOLLOWERS", label: "Followers" },
-                { value: "PRIVATE", label: "Private" },
-              ]}
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*"
-              multiple
-              hidden
-              onChange={onPickFiles}
-            />
-          </div>
-          <Button
-            isLoading={posting}
-            disabled={!canSubmit}
-            onClick={() => publish()}
-          >
-            Post
-          </Button>
+                  <X className="size-4" />
+                </button>
+              </div>
+            );
+          })}
         </div>
+      ) : null}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label="Attach media"
+          >
+            <ImagePlus className="h-5 w-5" />
+          </Button>
+          <Select value={visibility} onValueChange={setVisibility}>
+            <SelectTrigger className="w-32" size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PUBLIC">Public</SelectItem>
+              <SelectItem value="FOLLOWERS">Followers</SelectItem>
+              <SelectItem value="PRIVATE">Private</SelectItem>
+            </SelectContent>
+          </Select>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            hidden
+            onChange={onPickFiles}
+          />
+        </div>
+        <Button disabled={!canSubmit} onClick={() => publish()}>
+          {posting && <Spinner className="size-4" />}
+          Post
+        </Button>
       </div>
     </Card>
   );

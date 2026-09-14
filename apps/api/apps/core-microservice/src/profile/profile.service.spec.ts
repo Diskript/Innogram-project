@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProfileService } from "./profile.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { RedisService } from "../cache/redis.service";
 import { NotFoundException } from "@nestjs/common";
 
 describe("ProfileService", () => {
@@ -36,6 +37,12 @@ describe("ProfileService", () => {
 
   const mockFindUnique = jest.fn();
   const mockUpdate = jest.fn();
+  const mockRedisService = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+    delByPrefix: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -54,6 +61,7 @@ describe("ProfileService", () => {
             },
           },
         },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
@@ -137,6 +145,17 @@ describe("ProfileService", () => {
         service.updateProfile("bad-id", { displayName: "X" }),
       ).rejects.toThrow(NotFoundException);
     });
+
+    it("invalidates the cached public profile after an update", async () => {
+      mockFindUnique.mockResolvedValue({ id: "user-1", deleted: false });
+      mockUpdate.mockResolvedValue(mockPublicUser);
+
+      await service.updateProfile("user-1", { displayName: "Updated" });
+
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        "profile:public:testuser",
+      );
+    });
   });
 
   describe("getPublicProfile", () => {
@@ -167,9 +186,9 @@ describe("ProfileService", () => {
     it("should include follower/following/post counts", async () => {
       mockFindUnique.mockResolvedValue(mockPublicUser);
 
-      const result = await service.getPublicProfile("testuser");
+      const result = (await service.getPublicProfile("testuser")) as unknown;
 
-      expect(result._count).toEqual({
+      expect((result as typeof mockPublicUser)._count).toEqual({
         createdPosts: 5,
         followers: 10,
         following: 3,
@@ -181,6 +200,27 @@ describe("ProfileService", () => {
       await expect(service.getPublicProfile("baduser")).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it("stores a hit with a 300s TTL and serves a repeat from cache", async () => {
+      mockFindUnique.mockResolvedValue(mockPublicUser);
+
+      const first = await service.getPublicProfile("testuser");
+
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        "profile:public:testuser",
+        first,
+        300,
+      );
+
+      mockFindUnique.mockClear();
+      mockRedisService.get.mockResolvedValueOnce(
+        JSON.parse(JSON.stringify(first)),
+      );
+      const second = await service.getPublicProfile("testuser");
+
+      expect(second).toEqual(JSON.parse(JSON.stringify(first)));
+      expect(mockFindUnique).not.toHaveBeenCalled();
     });
   });
 });

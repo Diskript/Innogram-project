@@ -38,6 +38,9 @@ export class AssetResponseDto {
   @ApiProperty({ enum: Visibility })
   visibility!: Visibility;
 
+  @ApiProperty({ enum: ["PENDING", "READY", "FAILED"] })
+  processingStatus!: "PENDING" | "READY" | "FAILED";
+
   @ApiProperty()
   ownerId!: string;
 

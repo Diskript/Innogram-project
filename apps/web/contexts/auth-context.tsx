@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { JwtUser } from "@repo/shared-types";
-import { authApi, setAccessToken } from "@/lib/api-client";
+import { authApi, refreshSession, setAccessToken } from "@/lib/api-client";
 
 interface AuthTokensResponse {
   message: string;
@@ -62,22 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const authUrl =
-        process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
-      try {
-        const res = await fetch(`${authUrl}/jwt-auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refreshToken }),
-        });
-        if (!res.ok) throw new Error("Refresh failed");
-        const data: AuthTokensResponse = await res.json();
-        setAccessToken(data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        setUser({ userId: data.userId, email: "" });
-      } catch {
+      const restored = await refreshSession();
+      if (!restored) {
         clearSession();
+        return;
       }
+      setUser({ userId: restored.userId, email: "" });
     }
 
     void restoreSession().finally(() => setIsLoading(false));
