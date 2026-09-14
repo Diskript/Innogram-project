@@ -61,9 +61,9 @@ function AuthCallbackInner() {
   }, [searchParams, router]);
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md px-6 py-6">
       <CardHeader>
-        <CardTitle className="font-display">
+        <CardTitle className="tracking-tight">
           {status === "loading" && "Completing authentication..."}
           {status === "success" && "Signed in successfully!"}
           {status === "error" && "Authentication failed"}

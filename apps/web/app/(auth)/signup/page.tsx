@@ -58,14 +58,14 @@ export default function SignupPage() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md px-6 py-6">
       <CardHeader>
-        <CardTitle className="font-display">Create an account</CardTitle>
+        <CardTitle className="tracking-tight">Create an account</CardTitle>
         <CardDescription>Join Innogram today</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {serverError && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-[var(--ts-danger-text)]">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {serverError}
           </div>
         )}
@@ -79,9 +79,7 @@ export default function SignupPage() {
             {...register("email")}
           />
           {errors.email && (
-            <p className="text-xs text-[var(--ts-danger-text)]">
-              {errors.email.message}
-            </p>
+            <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -93,7 +91,7 @@ export default function SignupPage() {
             {...register("username")}
           />
           {errors.username && (
-            <p className="text-xs text-[var(--ts-danger-text)]">
+            <p className="text-xs text-destructive">
               {errors.username.message}
             </p>
           )}
@@ -107,7 +105,7 @@ export default function SignupPage() {
             {...register("displayName")}
           />
           {errors.displayName && (
-            <p className="text-xs text-[var(--ts-danger-text)]">
+            <p className="text-xs text-destructive">
               {errors.displayName.message}
             </p>
           )}
@@ -121,7 +119,7 @@ export default function SignupPage() {
             {...register("birthday")}
           />
           {errors.birthday && (
-            <p className="text-xs text-[var(--ts-danger-text)]">
+            <p className="text-xs text-destructive">
               {errors.birthday.message}
             </p>
           )}
@@ -135,9 +133,7 @@ export default function SignupPage() {
             {...register("bio")}
           />
           {errors.bio && (
-            <p className="text-xs text-[var(--ts-danger-text)]">
-              {errors.bio.message}
-            </p>
+            <p className="text-xs text-destructive">{errors.bio.message}</p>
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -150,7 +146,7 @@ export default function SignupPage() {
             {...register("password")}
           />
           {errors.password && (
-            <p className="text-xs text-[var(--ts-danger-text)]">
+            <p className="text-xs text-destructive">
               {errors.password.message}
             </p>
           )}
@@ -165,7 +161,7 @@ export default function SignupPage() {
             {...register("confirmPassword")}
           />
           {errors.confirmPassword && (
-            <p className="text-xs text-[var(--ts-danger-text)]">
+            <p className="text-xs text-destructive">
               {errors.confirmPassword.message}
             </p>
           )}
@@ -178,7 +174,7 @@ export default function SignupPage() {
       <div className="mt-4">
         <div className="relative mb-4">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--ts-border)]" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-card px-2 text-muted-foreground">
