@@ -23,7 +23,7 @@ export function FeedToolbar({
   setFilter: (v: FilterMode) => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center justify-end gap-2">
       <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
         <SelectTrigger className="w-36" size="sm">
           <SelectValue />
