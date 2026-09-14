@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Sora } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "@/providers";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const inter = localFont({
+  src: "./fonts/GeistVF.woff",
   variable: "--font-inter",
+  weight: "100 900",
 });
 
-const sora = Sora({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-sora",
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-mono",
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${sora.variable}`}>
+      <body className={`${inter.variable} ${geistMono.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>

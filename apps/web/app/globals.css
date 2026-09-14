@@ -16,49 +16,27 @@ html {
 }
 
 :root {
-  /* Twilight Signal — shadcn token overrides (app-wide; .chat-root re-declares
-     the same values, so chat is unaffected) */
-  --background: #120f1b;
-  --foreground: #ece9f6;
-  --card: #1b1630;
-  --card-foreground: #ece9f6;
-  --popover: #1b1630;
-  --popover-foreground: #ece9f6;
-  --primary: #f0a63c;
-  --primary-foreground: #241703;
-  --secondary: #221c3a;
-  --secondary-foreground: #ece9f6;
-  --muted: #221c3a;
-  --muted-foreground: #8f87ac;
-  --accent: #2a2350;
-  --accent-foreground: #ece9f6;
-  --destructive: #e8503c;
-  --destructive-foreground: #fafafa;
-  --border: #2b2450;
-  --input: #2e2650;
-  --ring: #f0a63c;
-  --radius: 0.75rem;
-
-  /* Twilight Signal custom tokens (--ts-*; --tw-* is reserved by Tailwind) */
-  --ts-bg: #120f1b;
-  --ts-list: #161226;
-  --ts-panel: #1b1630;
-  --ts-bubble: #221c3a;
-  --ts-border: #2b2450;
-  --ts-border-hover: #3a3162;
-  --ts-amber: #f0a63c;
-  --ts-amber-light: #f7bc5e;
-  --ts-amber-mid: #ed9a33;
-  --ts-amber-deep: #e8862e;
-  --ts-amber-ink: #241703;
-  --ts-violet: #8b7cf6;
-  --ts-violet-light: #a99cff;
-  --ts-green: #3ed598;
-  --ts-danger: #e8503c;
-  --ts-danger-text: #ff7a6e;
-  --ts-text: #ece9f6;
-  --ts-text-secondary: #8f87ac;
-  --ts-text-tertiary: #6e6690;
+  /* Inkwell — neutral dark, hairline structure, quiet amber accent */
+  --background: #0a0a0b;
+  --foreground: #ededf0;
+  --card: #101012;
+  --card-foreground: #ededf0;
+  --popover: #17171a;
+  --popover-foreground: #ededf0;
+  --primary: #e8a33d;
+  --primary-foreground: #201503;
+  --secondary: #1d1d21;
+  --secondary-foreground: #ededf0;
+  --muted: #1d1d21;
+  --muted-foreground: #8a8a93;
+  --accent: #1d1d21;
+  --accent-foreground: #ededf0;
+  --destructive: #f0554a;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.06);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #e8a33d;
+  --radius: 10px;
 }
 
 @theme inline {
@@ -94,39 +72,16 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
-.glow-soft {
-  box-shadow: 0 0 18px rgba(240, 166, 60, 0.4);
+.font-meta {
+  font-family: var(--font-mono), ui-monospace, monospace;
 }
 
-.aurora {
-  background-image:
-    radial-gradient(
-      1200px 500px at 80% -10%,
-      rgba(139, 124, 246, 0.1),
-      transparent 55%
-    ),
-    radial-gradient(
-      900px 420px at 0% 110%,
-      rgba(240, 166, 60, 0.05),
-      transparent 50%
-    );
-}
-
-.presence-lamp {
-  box-shadow: 0 0 10px rgba(62, 213, 152, 0.9);
-}
-
-.airmail-active {
-  border-left: 2px solid var(--ts-amber);
-  background: linear-gradient(
-    90deg,
-    rgba(240, 166, 60, 0.1),
-    rgba(139, 124, 246, 0.06) 60%,
-    transparent
-  );
+.shadow-overlay {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
