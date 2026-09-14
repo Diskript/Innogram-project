@@ -48,7 +48,7 @@ export default function FollowRequestsPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <section>
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
           <UserCheck className="h-5 w-5" /> Follow requests
         </h2>
         {incoming.isLoading ? (
@@ -78,7 +78,7 @@ export default function FollowRequestsPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
           <Clock className="h-5 w-5" /> Sent requests
         </h2>
         {outgoing.isLoading ? (

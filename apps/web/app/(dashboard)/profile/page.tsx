@@ -34,11 +34,12 @@ function StatLink({
   href: string;
 }) {
   return (
-    <Link href={href} className="text-center hover:opacity-80">
-      <p className="text-lg font-semibold text-neutral-900 dark:text-white">
-        {value}
-      </p>
-      <p className="text-xs text-neutral-500">{label}</p>
+    <Link
+      href={href}
+      className="text-center transition-opacity hover:opacity-80"
+    >
+      <p className="font-meta text-lg font-semibold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </Link>
   );
 }
@@ -100,9 +101,7 @@ export default function OwnProfilePage() {
             </Link>
           </div>
           {profile.bio ? (
-            <p className="text-sm text-neutral-600 dark:text-neutral-300">
-              {profile.bio}
-            </p>
+            <p className="text-sm text-muted-foreground">{profile.bio}</p>
           ) : null}
           <div className="flex items-center gap-6">
             <StatLink

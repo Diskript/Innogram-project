@@ -103,13 +103,13 @@ export function UserListPage({
 }) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">
         {mode === "followers" ? "Followers" : "Following"}
         {username ? (
-          <span className="ml-2 text-sm font-normal text-neutral-500">
+          <span className="font-meta ml-2 text-sm font-normal text-muted-foreground">
             <Link
               href={`/profile/${username}`}
-              className="hover:text-neutral-900 dark:hover:text-white"
+              className="hover:text-foreground"
             >
               @{username}
             </Link>

@@ -98,12 +98,12 @@ export default function ProfileSettingsPage() {
     <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle className="font-display">Profile settings</CardTitle>
+          <CardTitle>Profile settings</CardTitle>
           <CardDescription>Update your profile information</CardDescription>
         </CardHeader>
 
         {loadError && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-[var(--ts-danger-text)]">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {loadError}
           </div>
         )}
@@ -112,8 +112,8 @@ export default function ProfileSettingsPage() {
           <div
             className={
               saveStatus.type === "success"
-                ? "rounded-lg border border-[var(--ts-green)]/30 bg-[var(--ts-green)]/10 p-3 text-sm text-[var(--ts-green)]"
-                : "rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-[var(--ts-danger-text)]"
+                ? "rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-primary"
+                : "rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
             }
           >
             {saveStatus.message}
@@ -129,7 +129,7 @@ export default function ProfileSettingsPage() {
               {...register("displayName")}
             />
             {errors.displayName && (
-              <p className="text-xs text-[var(--ts-danger-text)]">
+              <p className="text-xs text-destructive">
                 {errors.displayName.message}
               </p>
             )}
@@ -143,9 +143,7 @@ export default function ProfileSettingsPage() {
               {...register("bio")}
             />
             {errors.bio && (
-              <p className="text-xs text-[var(--ts-danger-text)]">
-                {errors.bio.message}
-              </p>
+              <p className="text-xs text-destructive">{errors.bio.message}</p>
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -157,7 +155,7 @@ export default function ProfileSettingsPage() {
               {...register("avatarUrl")}
             />
             {errors.avatarUrl && (
-              <p className="text-xs text-[var(--ts-danger-text)]">
+              <p className="text-xs text-destructive">
                 {errors.avatarUrl.message}
               </p>
             )}

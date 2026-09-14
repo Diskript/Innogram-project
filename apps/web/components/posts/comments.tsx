@@ -125,7 +125,7 @@ export function CommentsSection({ postId }: { postId: string }) {
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <div className="rounded-xl rounded-tl-none border border-[var(--ts-border)] bg-[var(--ts-bubble)] px-3 py-2">
+          <div className="rounded-xl rounded-tl-none border border-border bg-secondary px-3 py-2">
             <p className="text-xs font-semibold text-foreground">
               {comment.user.displayName}
             </p>
@@ -167,7 +167,7 @@ export function CommentsSection({ postId }: { postId: string }) {
               <Heart
                 className={cn(
                   "h-3.5 w-3.5",
-                  liked && "fill-[var(--ts-danger)] text-[var(--ts-danger)]",
+                  liked && "fill-destructive text-destructive",
                 )}
               />
               {comment._count?.commentLikes ?? 0}
@@ -198,7 +198,7 @@ export function CommentsSection({ postId }: { postId: string }) {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  className="hover:text-[var(--ts-danger-text)]"
+                  className="hover:text-destructive"
                   onClick={() => remove(comment.id)}
                   aria-label="Delete comment"
                 >
